@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+/staticfiles/
+/media/*
+!/media/comprobantes/.gitkeep
+!/media/comprobantes_encomiendas/.gitkeep
+!/media/encomiendas/.gitkeep
+venv/
+.venv/
+*.log
+.DS_Store

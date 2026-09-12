@@ -1,0 +1,9 @@
+<nav class="navbar">
+  <span class="navbar-brand">{{ nombre_sistema }}</span>
+  {% if user.is_authenticated %}
+    <span>{{ user.get_full_name|default:user.username }} ({{ user.rol }})</span>
+    <a href="{% url 'usuarios:logout' %}">Salir</a>
+  {% else %}
+    <a href="{% url 'usuarios:login' %}">Iniciar sesión</a>
+  {% endif %}
+</nav>

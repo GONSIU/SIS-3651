@@ -1,0 +1,34 @@
+/* Estilos base del sistema - personalizar según diseño definitivo */
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: #0f4c81;
+  color: #fff;
+}
+
+.navbar a { color: #fff; margin-left: 1rem; }
+
+.contenedor {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.footer {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.mensajes { list-style: none; padding: 0; }
+.mensaje { padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 4px; }
+.mensaje-success { background: #d1f5d3; }
+.mensaje-error { background: #fdd; }

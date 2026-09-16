@@ -1,0 +1,144 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Incidencias — Trans Naser{% endblock %}
+{% block nav_incidencias %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Registro de Incidencias</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Monitoreo de anomalías operativas e interrupciones del servicio en toda la red.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors self-start" href="{% url 'incidencias:nueva' %}">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>Abrir Nueva Incidencia
+</a>
+</div>
+
+<div class="card-panel rounded-lg p-4 flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>ESTADO:</span>
+<select class="form-input-custom border border-outline-variant rounded px-3 py-1.5 bg-white text-on-surface"><option>Todos los Estados</option><option>Abierta</option><option>Investigando</option><option>Cerrada</option></select>
+</div>
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>RANGO DE FECHA:</span>
+<span class="border border-outline-variant rounded px-3 py-1.5 flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-[16px]">calendar_today</span>1 Oct – 31 Oct 2026</span>
+</div>
+<button class="border border-outline-variant rounded px-3 py-1.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">tune</span>Más Filtros</button>
+<button class="ml-auto border border-outline-variant rounded px-3 py-1.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">download</span>Exportar</button>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">ID / Vehículo</th><th class="px-5 py-3">Descripción</th><th class="px-5 py-3">Fecha y Hora</th><th class="px-5 py-3">Reportado por</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="incident-rows">
+<tr class="border-l-4 border-signal-orange">
+<td class="px-5 py-3"><p class="font-label text-label-md text-deep-navy">INC-8492</p><p class="font-label text-label-sm text-on-surface-variant">Bus #402</p></td>
+<td class="px-5 py-3"><p class="font-body-sm text-deep-navy font-medium">Falla mecánica en ruta — Motor</p><p class="text-on-surface-variant truncate max-w-xs">El vehículo reportó pérdida de potencia en la carretera…</p></td>
+<td class="px-5 py-3 font-label text-on-surface-variant">24 Oct 2026<br/>14:32 hrs</td>
+<td class="px-5 py-3">Carlos Rivera</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-red-100 text-red-800">ABIERTA</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-id="INC-8492" data-vehicle="Bus #402" data-title="Falla mecánica en ruta — Motor" data-desc="El vehículo reportó pérdida de potencia en la carretera. Se envió una grúa de asistencia al punto kilométrico indicado por el conductor." data-date="24 Oct 2026, 14:32 hrs" data-reporter="Carlos Rivera" data-status-label="ABIERTA" data-status-class="bg-red-100 text-red-800" onclick="openIncidentDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-l-4 border-transparent">
+<td class="px-5 py-3"><p class="font-label text-label-md text-deep-navy">INC-8488</p><p class="font-label text-label-sm text-on-surface-variant">Terminal A</p></td>
+<td class="px-5 py-3"><p class="font-body-sm text-deep-navy font-medium">Retraso en salida por abordaje</p><p class="text-on-surface-variant truncate max-w-xs">Exceso de equipaje durante la carga causó una demora de 15 minutos…</p></td>
+<td class="px-5 py-3 font-label text-on-surface-variant">23 Oct 2026<br/>09:15 hrs</td>
+<td class="px-5 py-3">María García</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">CERRADA</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-id="INC-8488" data-vehicle="Terminal A" data-title="Retraso en salida por abordaje" data-desc="Exceso de equipaje durante la carga causó una demora de 15 minutos en el abordaje de pasajeros del Terminal A." data-date="23 Oct 2026, 09:15 hrs" data-reporter="María García" data-status-label="CERRADA" data-status-class="bg-surface-container-highest text-on-surface-variant" onclick="openIncidentDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-l-4 border-transparent">
+<td class="px-5 py-3"><p class="font-label text-label-md text-deep-navy">INC-8485</p><p class="font-label text-label-sm text-on-surface-variant">Bus #319</p></td>
+<td class="px-5 py-3"><p class="font-body-sm text-deep-navy font-medium">Daño menor en carrocería</p><p class="text-on-surface-variant truncate max-w-xs">Rayón en el panel lateral derecho reportado durante la inspección…</p></td>
+<td class="px-5 py-3 font-label text-on-surface-variant">22 Oct 2026<br/>05:40 hrs</td>
+<td class="px-5 py-3">Jorge López</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">INVESTIGANDO</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-id="INC-8485" data-vehicle="Bus #319" data-title="Daño menor en carrocería" data-desc="Rayón en el panel lateral derecho reportado durante la inspección previa a la salida." data-date="22 Oct 2026, 05:40 hrs" data-reporter="Jorge López" data-status-label="INVESTIGANDO" data-status-class="bg-blue-100 text-blue-800" onclick="openIncidentDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-l-4 border-transparent">
+<td class="px-5 py-3"><p class="font-label text-label-md text-deep-navy">INC-8472</p><p class="font-label text-label-sm text-on-surface-variant">Ruta 42</p></td>
+<td class="px-5 py-3"><p class="font-body-sm text-deep-navy font-medium">Queja de cliente — Climatización</p><p class="text-on-surface-variant truncate max-w-xs">Pasajero reportó que el aire acondicionado no funcionaba…</p></td>
+<td class="px-5 py-3 font-label text-on-surface-variant">20 Oct 2026<br/>16:05 hrs</td>
+<td class="px-5 py-3">Sistema Automático</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">CERRADA</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-id="INC-8472" data-vehicle="Ruta 42" data-title="Queja de cliente — Climatización" data-desc="Pasajero reportó que el aire acondicionado no funcionaba correctamente durante el trayecto." data-date="20 Oct 2026, 16:05 hrs" data-reporter="Sistema Automático" data-status-label="CERRADA" data-status-class="bg-surface-container-highest text-on-surface-variant" onclick="openIncidentDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-surface-container-highest font-body-sm text-body-sm text-on-surface-variant">
+<span>Mostrando 1 a 4 de 124 registros</span>
+<div class="flex items-center gap-1.5">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded bg-deep-navy text-white font-label text-label-sm">1</button>
+<button class="w-8 h-8 rounded border border-outline-variant font-label text-label-sm hover:border-deep-navy">2</button>
+<button class="w-8 h-8 rounded border border-outline-variant font-label text-label-sm hover:border-deep-navy">3</button>
+<span>…</span>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+
+
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-margin-mobile md:p-margin-desktop" id="modal-incident-detail">
+<div class="absolute inset-0 modal-overlay" onclick="closeModal('modal-incident-detail')"></div>
+<div class="relative z-10 w-full max-w-lg glass-panel rounded-xl flex flex-col overflow-hidden max-h-[90vh]">
+<header class="flex justify-between items-center px-6 py-5 border-b border-surface-container-highest bg-surface-container-lowest">
+<div>
+<p class="font-label text-label-sm text-on-surface-variant" id="detail-id">INC-0000</p>
+<h1 class="font-headline text-headline-md text-deep-navy" id="detail-title">Título de la incidencia</h1>
+</div>
+<button class="text-on-surface-variant hover:text-deep-navy transition-colors p-2 rounded-full hover:bg-surface-container" onclick="closeModal('modal-incident-detail')"><span class="material-symbols-outlined">close</span></button>
+</header>
+<div class="p-6 bg-surface-container-lowest flex-grow overflow-y-auto space-y-4">
+<div class="flex flex-wrap gap-3 font-body-sm text-body-sm">
+<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">directions_bus</span><span id="detail-vehicle">—</span></span>
+<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">schedule</span><span id="detail-date">—</span></span>
+<span class="font-label text-label-sm px-2.5 py-1 rounded-full" id="detail-status">—</span>
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Descripción</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="detail-desc">—</p>
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Reportado por</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="detail-reporter">—</p>
+</div>
+</div>
+<footer class="px-6 py-4 border-t border-surface-container-highest bg-surface-container flex items-center justify-end">
+<button class="px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high transition-colors" onclick="closeModal('modal-incident-detail')">Cerrar</button>
+</footer>
+</div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    function openIncidentDetail(btn) {
+        var d = btn.dataset;
+        document.getElementById('detail-id').textContent = d.id;
+        document.getElementById('detail-title').textContent = d.title;
+        document.getElementById('detail-vehicle').textContent = d.vehicle;
+        document.getElementById('detail-date').textContent = d.date;
+        document.getElementById('detail-desc').textContent = d.desc;
+        document.getElementById('detail-reporter').textContent = d.reporter;
+        var st = document.getElementById('detail-status');
+        st.textContent = d.statusLabel;
+        st.className = 'font-label text-label-sm px-2.5 py-1 rounded-full ' + d.statusClass;
+        openModal('modal-incident-detail');
+    }
+</script>
+{% endblock %}

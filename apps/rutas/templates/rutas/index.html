@@ -1,5 +1,163 @@
-{% extends "base.html" %}
+{% extends "base_dashboard.html" %}
+
+{% block title %}Dashboard — Trans Naser{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
 {% block content %}
-<h2>Bienvenido, {{ user.get_full_name|default:user.username }}</h2>
-<p>Panel principal del sistema. Aquí irá el listado de rutas y horarios.</p>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Resumen General</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Estadísticas en tiempo real del sistema de transporte operativo.</p>
+</div>
+<span class="font-label text-label-sm text-on-surface-variant bg-surface-container rounded px-3 py-1.5 self-start">Última actualización: 10:42 AM</span>
+</div>
+
+<div class="card-panel rounded-lg p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<img alt="Logotipo Trans Naser" class="h-16 w-16 rounded-md object-contain bg-surface-container-lowest border border-outline-variant p-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDLq2AZ7Ev8aWQKPrb794UmDm6ngLB4Ksx-73HVmdlnUwapQ7CN0ZHq0P5xnt3A0tekypgC80tBvsn_jZg1xC0t-cl9NAj31BlaTSRJ99Q1i1aTRRH0PxKE0RrsdmbmIvJhAq3dLFtIG3jHujMGxrKk5Hj73csa630t_yZjE9_3Uakawf-VmxnjZi_3GvsK8syd2vMzyZKRqxWYVGjZQ42YCfswW8AunzRCU4Ngvv0VHFulKCk4wt8mX9UkvQs5bnbh1E"/>
+<div>
+<h2 class="font-headline text-headline-md text-deep-navy">Trans Naser</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Panel de Control Principal</p>
+</div>
+</div>
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors" onclick="openModal('modal-nueva-entrada')">
+<span class="material-symbols-outlined text-[18px]">bolt</span>Acción Rápida
+</button>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<div class="flex items-start justify-between">
+<span class="font-label text-label-sm text-on-surface-variant">BOLETOS HOY</span>
+<span class="material-symbols-outlined text-slate-blue text-[20px]">confirmation_number</span>
+</div>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">1,248</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-green-600">trending_up</span>+12% vs ayer</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<div class="flex items-start justify-between">
+<span class="font-label text-label-sm text-on-surface-variant">ENCOMIENDAS</span>
+<span class="material-symbols-outlined text-slate-blue text-[20px]">package_2</span>
+</div>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">432</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">local_shipping</span>85% despachadas</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<div class="flex items-start justify-between">
+<span class="font-label text-label-sm text-on-surface-variant">RUTAS ACTIVAS</span>
+<span class="material-symbols-outlined text-slate-blue text-[20px]">alt_route</span>
+</div>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">24 / 28</p>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full mt-2"><div class="h-1.5 bg-slate-blue rounded-full" style="width:86%"></div></div>
+</div>
+<div class="rounded-lg p-4 border-l-4 border-signal-orange" style="background:#fff4ec">
+<div class="flex items-start justify-between">
+<span class="font-label text-label-sm text-secondary">INCIDENCIAS</span>
+<span class="material-symbols-outlined text-signal-orange text-[20px]">warning</span>
+</div>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">3</p>
+<p class="font-body-sm text-body-sm text-secondary mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">priority_high</span>Requieren atención</p>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 card-panel rounded-lg overflow-hidden">
+<div class="flex items-center justify-between px-5 py-4 border-b border-surface-container-highest">
+<h3 class="font-headline text-headline-md text-deep-navy">Próximas Salidas</h3>
+<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange flex items-center gap-1" href="{% url 'ventas:nueva_venta' %}">Ver Todas<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low font-label text-label-sm text-on-surface-variant uppercase">
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Hora</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Ocupación</th><th class="px-5 py-3">Estado</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Cochabamba</td>
+<td class="px-5 py-3 font-label">08:00 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 1234-ABC</td>
+<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">45/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:90%"></div></div></div></td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Santa Cruz</td>
+<td class="px-5 py-3 font-label">10:30 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 5678-XYZ</td>
+<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">20/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:40%"></div></div></div></td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Cochabamba → Sucre</td>
+<td class="px-5 py-3 font-label">14:00 PM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 9012-DEF</td>
+<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">48/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-signal-orange rounded-full" style="width:96%"></div></div></div></td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-red-100 text-red-800">RETRASADO</span></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Santa Cruz → Tarija</td>
+<td class="px-5 py-3 font-label">18:00 PM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 3456-GHI</td>
+<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">35/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:70%"></div></div></div></td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden flex flex-col">
+<div class="px-5 py-4 border-b border-surface-container-highest">
+<h3 class="font-headline text-headline-md text-deep-navy">Ventas Recientes</h3>
+</div>
+<div class="divide-y divide-surface-container-highest">
+<div class="flex items-center gap-3 px-5 py-3.5">
+<div class="w-9 h-9 rounded-full bg-tertiary-container/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-slate-blue">confirmation_number</span></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Boleto: VIP - La Paz/Santa Cruz</p>
+<p class="font-label text-label-sm text-on-surface-variant">Caja 02 · Operador</p>
+</div>
+<div class="text-right shrink-0">
+<p class="font-label text-label-md text-deep-navy">Bs 200.00</p>
+<p class="font-label text-label-sm text-on-surface-variant">Hace 2 min</p>
+</div>
+</div>
+<div class="flex items-center gap-3 px-5 py-3.5">
+<div class="w-9 h-9 rounded-full bg-signal-orange/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-signal-orange">package_2</span></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Encomienda: #1583</p>
+<p class="font-label text-label-sm text-on-surface-variant">Almacén Centro</p>
+</div>
+<div class="text-right shrink-0">
+<p class="font-label text-label-md text-deep-navy">Bs 45.00</p>
+<p class="font-label text-label-sm text-on-surface-variant">Hace 15 min</p>
+</div>
+</div>
+<div class="flex items-center gap-3 px-5 py-3.5">
+<div class="w-9 h-9 rounded-full bg-tertiary-container/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-slate-blue">confirmation_number</span></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Boleto: Estándar - Cochabamba/Sucre</p>
+<p class="font-label text-label-sm text-on-surface-variant">Web · Pago con Tarjeta</p>
+</div>
+<div class="text-right shrink-0">
+<p class="font-label text-label-md text-deep-navy">Bs 90.00</p>
+<p class="font-label text-label-sm text-on-surface-variant">Hace 22 min</p>
+</div>
+</div>
+<div class="flex items-center gap-3 px-5 py-3.5">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">task_alt</span></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Cierre de Lote — Caja 02</p>
+<p class="font-label text-label-sm text-on-surface-variant">Sistema Automático</p>
+</div>
+<div class="text-right shrink-0">
+<p class="font-label text-label-md text-green-700">OK</p>
+<p class="font-label text-label-sm text-on-surface-variant">Hace 1 h</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
 {% endblock %}

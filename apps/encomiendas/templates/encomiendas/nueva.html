@@ -1,0 +1,102 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nueva Encomienda — Trans Naser{% endblock %}
+{% block nav_encomiendas %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<a class="font-label text-label-sm text-on-surface-variant hover:text-deep-navy flex items-center gap-1 mb-2" href="{% url 'encomiendas:listado' %}"><span class="material-symbols-outlined text-[16px]">arrow_back</span>Volver a Encomiendas</a>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Encomienda</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Gestión de envío de paquetes y mensajería.</p>
+</div>
+<span class="font-label text-label-sm text-on-surface-variant bg-surface-container rounded px-3 py-1.5 flex items-center gap-2 self-start"><span class="material-symbols-outlined text-[16px]">calendar_today</span>26 Ago 2026</span>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-6">
+<div class="card-panel rounded-lg p-6">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-signal-orange">badge</span>Remitente</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">DNI / RUC</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Ingrese documento" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Nombre Completo / Razón Social</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="parcel-sender" placeholder="Nombre automático o manual" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Teléfono</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Ej. 70123456" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Correo Electrónico</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="correo@ejemplo.com" type="email"/></div>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-signal-orange">contact_mail</span>Destinatario</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">DNI / RUC</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Ingrese documento" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Nombre Completo / Razón Social</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="parcel-recipient" placeholder="Nombre automático o manual" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Teléfono</label><input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Ej. 70123456" type="text"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Destino</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm bg-white" id="parcel-destination"><option>Seleccione destino…</option><option>Cochabamba</option><option>Santa Cruz</option><option>Sucre</option><option>Tarija</option></select>
+</div>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-signal-orange">inventory_2</span>Detalles de la Encomienda</h3>
+<div class="space-y-1.5 mb-5">
+<label class="font-label text-label-md text-deep-navy uppercase">Descripción del Contenido</label>
+<textarea class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm resize-none" placeholder="Ej. Documentos importantes, ropa, repuestos…" rows="3"></textarea>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Peso (kg)</label><input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 font-body-sm text-body-sm" id="parcel-weight" placeholder="0.0" type="number"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Largo (cm)</label><input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 font-body-sm text-body-sm" placeholder="L" type="number"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Ancho (cm)</label><input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 font-body-sm text-body-sm" placeholder="A" type="number"/></div>
+<div class="space-y-1.5"><label class="font-label text-label-md text-deep-navy uppercase">Alto (cm)</label><input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 font-body-sm text-body-sm" placeholder="H" type="number"/></div>
+</div>
+<div class="mt-4 max-w-xs space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Valor Declarado (Bs)</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 font-body-sm text-body-sm" placeholder="0.00" type="number"/>
+</div>
+</div>
+</div>
+
+<div class="space-y-6">
+<div class="bg-deep-navy rounded-lg p-5 text-white">
+<p class="font-label text-label-sm text-on-primary-container mb-1">TRACKING PRELIMINAR</p>
+<div class="flex items-center justify-between">
+<p class="font-headline text-headline-md" id="parcel-tracking-preview">TRN-8825-A</p>
+<span class="material-symbols-outlined text-signal-orange">qr_code_2</span>
+</div>
+<div class="flex items-center gap-2 my-3 text-on-primary-container">
+<span class="flex-1 border-t border-dashed border-white/20"></span>
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+<span class="flex-1 border-t border-dashed border-white/20"></span>
+</div>
+<div class="flex justify-between font-label text-label-sm">
+<span>Origen: LA PAZ</span><span>Dest: ---</span>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-5">
+<h3 class="font-headline text-headline-md text-deep-navy mb-3">Resumen de Tarifa</h3>
+<dl class="space-y-2.5 font-body-sm text-body-sm">
+<div class="flex justify-between"><dt class="text-on-surface-variant">Flete Base</dt><dd class="font-label text-deep-navy">Bs 0.00</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Cargo por Peso/Volumen</dt><dd class="font-label text-deep-navy">Bs 0.00</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Seguro (Valor Declarado)</dt><dd class="font-label text-deep-navy">Bs 0.00</dd></div>
+</dl>
+<div class="flex justify-between items-center mt-4 pt-4 border-t border-surface-container-highest">
+<span class="font-label text-label-md text-deep-navy">Total a Pagar</span>
+<span class="font-headline text-headline-md text-deep-navy">Bs 0.00</span>
+</div>
+<button class="mt-4 w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2 shadow-sm transition-colors" onclick="registerParcel(event)"><span class="material-symbols-outlined text-[18px]">print</span>Generar Guía</button>
+<button class="mt-2.5 w-full border border-deep-navy text-deep-navy font-label text-label-md py-3 rounded hover:bg-surface-container-high transition-colors" onclick="genericSave(event,'Borrador guardado')">Guardar Borrador</button>
+</div>
+</div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    function registerParcel(e) {
+        e.preventDefault();
+        showToast('Guía generada y encomienda registrada');
+        setTimeout(function () { window.location.href = "{% url 'encomiendas:listado' %}"; }, 900);
+    }
+</script>
+{% endblock %}

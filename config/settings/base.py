@@ -105,3 +105,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "usuarios:login"
 LOGIN_REDIRECT_URL = "rutas:index"
 LOGOUT_REDIRECT_URL = "usuarios:login"
+
+#para ngrok
+CSRF_TRUSTED_ORIGINS = [
+    "https://subgroup-unfrosted-directly.ngrok-free.dev"
+]
+

@@ -1,0 +1,152 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Encomiendas — Trans Naser{% endblock %}
+{% block nav_encomiendas %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Encomiendas</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Historial de paquetes y mensajería registrados en el sistema.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors self-start" href="{% url 'encomiendas:nueva' %}">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>Nueva Encomienda
+</a>
+</div>
+
+<div class="card-panel rounded-lg p-4 flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>ESTADO:</span>
+<select class="form-input-custom border border-outline-variant rounded px-3 py-1.5 bg-white text-on-surface"><option>Todos los Estados</option><option>En Tránsito</option><option>Entregada</option><option>Pendiente</option></select>
+</div>
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>RANGO DE FECHA:</span>
+<span class="border border-outline-variant rounded px-3 py-1.5 flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-[16px]">calendar_today</span>1 Oct – 31 Oct 2026</span>
+</div>
+<button class="border border-outline-variant rounded px-3 py-1.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">tune</span>Más Filtros</button>
+<button class="ml-auto border border-outline-variant rounded px-3 py-1.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">download</span>Exportar</button>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Tracking</th><th class="px-5 py-3">Remitente → Destinatario</th><th class="px-5 py-3">Destino</th><th class="px-5 py-3">Peso</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="parcel-rows">
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">TRN-8824-A</td>
+<td class="px-5 py-3">Juan Pérez → Ana Gómez</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Cochabamba</td>
+<td class="px-5 py-3 font-label">4.2 kg</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">24 Oct 2026</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">EN TRÁNSITO</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-tracking="TRN-8824-A" data-sender="Juan Pérez" data-recipient="Ana Gómez" data-destination="Cochabamba" data-weight="4.2 kg" data-date="24 Oct 2026" data-status-label="EN TRÁNSITO" data-status-class="bg-blue-100 text-blue-800" onclick="openParcelDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">TRN-8819-B</td>
+<td class="px-5 py-3">Empresa ACME S.R.L. → Carlos Rivera</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Santa Cruz</td>
+<td class="px-5 py-3 font-label">12.0 kg</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">22 Oct 2026</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ENTREGADA</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-tracking="TRN-8819-B" data-sender="Empresa ACME S.R.L." data-recipient="Carlos Rivera" data-destination="Santa Cruz" data-weight="12.0 kg" data-date="22 Oct 2026" data-status-label="ENTREGADA" data-status-class="bg-green-100 text-green-800" onclick="openParcelDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">TRN-8810-C</td>
+<td class="px-5 py-3">María López → Jorge Quispe</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Sucre</td>
+<td class="px-5 py-3 font-label">2.5 kg</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">20 Oct 2026</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">PENDIENTE</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-tracking="TRN-8810-C" data-sender="María López" data-recipient="Jorge Quispe" data-destination="Sucre" data-weight="2.5 kg" data-date="20 Oct 2026" data-status-label="PENDIENTE" data-status-class="bg-amber-100 text-amber-800" onclick="openParcelDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">TRN-8807-D</td>
+<td class="px-5 py-3">Luis Fernández → Rosa Mendoza</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Tarija</td>
+<td class="px-5 py-3 font-label">7.8 kg</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">18 Oct 2026</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ENTREGADA</span></td>
+<td class="px-5 py-3 text-right">
+<button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" data-tracking="TRN-8807-D" data-sender="Luis Fernández" data-recipient="Rosa Mendoza" data-destination="Tarija" data-weight="7.8 kg" data-date="18 Oct 2026" data-status-label="ENTREGADA" data-status-class="bg-green-100 text-green-800" onclick="openParcelDetail(this)"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-surface-container-highest font-body-sm text-body-sm text-on-surface-variant">
+<span>Mostrando 1 a 4 de 58 registros</span>
+<div class="flex items-center gap-1.5">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded bg-deep-navy text-white font-label text-label-sm">1</button>
+<button class="w-8 h-8 rounded border border-outline-variant font-label text-label-sm hover:border-deep-navy">2</button>
+<button class="w-8 h-8 rounded border border-outline-variant font-label text-label-sm hover:border-deep-navy">3</button>
+<span>…</span>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+
+
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-margin-mobile md:p-margin-desktop" id="modal-parcel-detail">
+<div class="absolute inset-0 modal-overlay" onclick="closeModal('modal-parcel-detail')"></div>
+<div class="relative z-10 w-full max-w-lg glass-panel rounded-xl flex flex-col overflow-hidden max-h-[90vh]">
+<header class="flex justify-between items-center px-6 py-5 border-b border-surface-container-highest bg-surface-container-lowest">
+<div>
+<p class="font-label text-label-sm text-on-surface-variant" id="parcel-detail-tracking">TRN-0000-A</p>
+<h1 class="font-headline text-headline-md text-deep-navy">Detalle de la Encomienda</h1>
+</div>
+<button class="text-on-surface-variant hover:text-deep-navy transition-colors p-2 rounded-full hover:bg-surface-container" onclick="closeModal('modal-parcel-detail')"><span class="material-symbols-outlined">close</span></button>
+</header>
+<div class="p-6 bg-surface-container-lowest flex-grow overflow-y-auto space-y-4">
+<div class="flex flex-wrap gap-3 font-body-sm text-body-sm">
+<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">location_on</span><span id="parcel-detail-destination">—</span></span>
+<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">schedule</span><span id="parcel-detail-date">—</span></span>
+<span class="font-label text-label-sm px-2.5 py-1 rounded-full" id="parcel-detail-status">—</span>
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Remitente</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="parcel-detail-sender">—</p>
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Destinatario</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="parcel-detail-recipient">—</p>
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Peso</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="parcel-detail-weight">—</p>
+</div>
+</div>
+<footer class="px-6 py-4 border-t border-surface-container-highest bg-surface-container flex items-center justify-end">
+<button class="px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high transition-colors" onclick="closeModal('modal-parcel-detail')">Cerrar</button>
+</footer>
+</div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    function openParcelDetail(btn) {
+        var d = btn.dataset;
+        document.getElementById('parcel-detail-tracking').textContent = d.tracking;
+        document.getElementById('parcel-detail-destination').textContent = d.destination;
+        document.getElementById('parcel-detail-date').textContent = d.date;
+        document.getElementById('parcel-detail-sender').textContent = d.sender;
+        document.getElementById('parcel-detail-recipient').textContent = d.recipient;
+        document.getElementById('parcel-detail-weight').textContent = d.weight;
+        var st = document.getElementById('parcel-detail-status');
+        st.textContent = d.statusLabel;
+        st.className = 'font-label text-label-sm px-2.5 py-1 rounded-full ' + d.statusClass;
+        openModal('modal-parcel-detail');
+    }
+</script>
+{% endblock %}

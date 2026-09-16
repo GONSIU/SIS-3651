@@ -1,0 +1,52 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nueva Incidencia — Trans Naser{% endblock %}
+{% block nav_incidencias %}active{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Incidencia</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra los detalles del problema o anomalía reportada.</p>
+</div>
+<form class="card-panel rounded-lg p-6" id="incident-form" onsubmit="registerIncident(event)">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="inc-title">Título de la Incidencia</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="inc-title" placeholder="Ej: Retraso en ruta A-102" required type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Categoría</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm bg-white" id="inc-category">
+<option value="">Seleccione una categoría</option>
+<option>Falla mecánica</option><option>Retraso operativo</option><option>Daño en unidad</option><option>Queja de cliente</option><option>Otro</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Fecha y Hora</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="inc-datetime" type="datetime-local"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Personal Involucrado (Opcional)</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Nombre o ID del empleado" type="text"/>
+</div>
+</div>
+<div class="space-y-1.5 mt-6">
+<label class="font-label text-label-md text-deep-navy uppercase">Descripción Detallada</label>
+<textarea class="form-input-custom w-full border border-outline-variant rounded px-4 py-3 font-body-sm text-body-sm resize-none" id="inc-desc" placeholder="Describa de manera cronológica y precisa lo sucedido…" rows="6"></textarea>
+</div>
+<div class="flex justify-end gap-3 mt-6 pt-6 border-t border-surface-container-highest">
+<a class="px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high transition-colors" type="button" href="{% url 'incidencias:listado' %}">Cancelar</a>
+<button class="px-6 py-2.5 rounded bg-signal-orange text-white font-label text-label-md hover:bg-secondary transition-colors shadow-sm flex items-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">report</span>Registrar Incidencia</button>
+</div>
+</form>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    function registerIncident(e) {
+        e.preventDefault();
+        showToast('Incidencia registrada');
+        setTimeout(function () { window.location.href = "{% url 'incidencias:listado' %}"; }, 900);
+    }
+</script>
+{% endblock %}

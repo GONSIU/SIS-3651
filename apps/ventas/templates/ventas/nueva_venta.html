@@ -1,0 +1,172 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nueva Venta de Boleto — Trans Naser{% endblock %}
+{% block nav_ventas %}active{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Venta de Boleto</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Selecciona la ruta, asigna el asiento y registra los datos del pasajero.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-6">
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="flex items-center justify-between px-5 py-4 border-b border-surface-container-highest">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2"><span class="material-symbols-outlined text-signal-orange">alt_route</span>Rutas Disponibles</h3>
+<input class="form-input-custom border border-outline-variant rounded px-3 py-1.5 font-body-sm text-body-sm" type="date"/>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3 w-10"></th><th class="px-5 py-3">Salida</th><th class="px-5 py-3">Destino</th><th class="px-5 py-3">Hora</th><th class="px-5 py-3">Tipo de Bus</th><th class="px-5 py-3">Precio</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm" id="route-rows">
+<tr class="hover:bg-surface-container-low cursor-pointer" onclick="selectRoute(0)">
+<td class="px-5 py-3"><input checked class="route-radio" name="route" type="radio"/></td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz</td><td class="px-5 py-3">Cochabamba</td>
+<td class="px-5 py-3 font-label">08:00 AM</td><td class="px-5 py-3">Leito</td><td class="px-5 py-3 font-label">Bs 120</td>
+</tr>
+<tr class="hover:bg-surface-container-low cursor-pointer" onclick="selectRoute(1)">
+<td class="px-5 py-3"><input class="route-radio" name="route" type="radio"/></td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz</td><td class="px-5 py-3">Santa Cruz</td>
+<td class="px-5 py-3 font-label">10:30 AM</td><td class="px-5 py-3">Cama</td><td class="px-5 py-3 font-label">Bs 200</td>
+</tr>
+<tr class="hover:bg-surface-container-low cursor-pointer" onclick="selectRoute(2)">
+<td class="px-5 py-3"><input class="route-radio" name="route" type="radio"/></td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Cochabamba</td><td class="px-5 py-3">Sucre</td>
+<td class="px-5 py-3 font-label">14:00 PM</td><td class="px-5 py-3">Semicama</td><td class="px-5 py-3 font-label">Bs 90</td>
+</tr>
+<tr class="hover:bg-surface-container-low cursor-pointer" onclick="selectRoute(3)">
+<td class="px-5 py-3"><input class="route-radio" name="route" type="radio"/></td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Santa Cruz</td><td class="px-5 py-3">Tarija</td>
+<td class="px-5 py-3 font-label">18:00 PM</td><td class="px-5 py-3">Cama VIP</td><td class="px-5 py-3 font-label">Bs 250</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-signal-orange">person</span>Información del Pasajero</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Nombre Completo</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="pax-name" oninput="updateSummary()" placeholder="Ingrese el nombre del pasajero" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">CI / Pasaporte</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="Número de documento" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Nacionalidad</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm bg-white">
+<option>Boliviana</option><option>Peruana</option><option>Argentina</option><option>Chilena</option><option>Otra</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase">Teléfono (Opcional)</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" placeholder="+591" type="text"/>
+</div>
+</div>
+</div>
+</div>
+
+<div class="space-y-6">
+<div class="card-panel rounded-lg p-5">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2"><span class="material-symbols-outlined text-signal-orange">airline_seat_recline_normal</span>Mapa de Asientos</h3>
+</div>
+<div class="flex items-center gap-4 mb-4 font-label text-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm border border-outline-variant bg-white inline-block"></span>Libre</span>
+<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-signal-orange inline-block"></span>Seleccionado</span>
+<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-surface-container-highest inline-block"></span>Ocupado</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4">
+<div class="flex justify-end mb-3"><span class="material-symbols-outlined text-deep-navy bg-white rounded-full p-2 border border-outline-variant">airline_seat_recline_extra</span></div>
+<div class="grid grid-cols-3 gap-2.5" id="seat-grid"></div>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-5 sticky top-0">
+<h3 class="font-headline text-headline-md text-deep-navy mb-3">Resumen del Boleto</h3>
+<dl class="space-y-2 font-body-sm text-body-sm">
+<div class="flex justify-between"><dt class="text-on-surface-variant">Ruta</dt><dd class="font-label text-deep-navy" id="summary-route">La Paz → Cochabamba</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Pasajero</dt><dd class="font-label text-deep-navy" id="summary-pax">—</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Asiento</dt><dd class="font-label text-deep-navy" id="summary-seat">11</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Precio</dt><dd class="font-label text-deep-navy" id="summary-price">Bs 120.00</dd></div>
+</dl>
+<div class="flex justify-between items-center mt-4 pt-4 border-t border-surface-container-highest">
+<span class="font-label text-label-md text-deep-navy">Total a Pagar</span>
+<span class="font-headline text-headline-md text-deep-navy" id="summary-total">Bs 120.00</span>
+</div>
+<button class="mt-4 w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2 shadow-sm transition-colors" onclick="confirmSale(event)">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>Confirmar Venta
+</button>
+</div>
+</div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    var routesData = [
+        { name: 'La Paz → Cochabamba', price: 120 },
+        { name: 'La Paz → Santa Cruz', price: 200 },
+        { name: 'Cochabamba → Sucre', price: 90 },
+        { name: 'Santa Cruz → Tarija', price: 250 }
+    ];
+    var selectedRouteIndex = 0;
+    var selectedSeat = '11';
+    var takenSeats = ['2', '6', '7', '16', '18'];
+
+    function buildSeatGrid() {
+        var grid = document.getElementById('seat-grid');
+        var html = '';
+        for (var i = 1; i <= 25; i++) {
+            var n = String(i);
+            var taken = takenSeats.indexOf(n) !== -1;
+            var selected = n === selectedSeat;
+            var cls = taken ? 'seat-taken' : (selected ? 'seat-selected' : 'seat-free');
+            html += '<button type="button" class="seat-btn ' + cls + ' rounded-md h-10 font-label text-label-sm" ' +
+                (taken ? 'disabled' : 'onclick="selectSeat(this,\'' + n + '\')"') + '>' + n + '</button>';
+        }
+        grid.innerHTML = html;
+    }
+
+    function selectRoute(i) {
+        selectedRouteIndex = i;
+        document.querySelectorAll('.route-radio').forEach(function (r, idx) { r.checked = idx === i; });
+        updateSummary();
+    }
+
+    function selectSeat(el, seatNum) {
+        document.querySelectorAll('.seat-btn').forEach(function (s) {
+            if (!s.disabled) s.className = s.className.replace('seat-selected', 'seat-free');
+        });
+        el.className = el.className.replace('seat-free', 'seat-selected');
+        selectedSeat = seatNum;
+        updateSummary();
+    }
+
+    function updateSummary() {
+        var r = routesData[selectedRouteIndex];
+        document.getElementById('summary-route').textContent = r.name;
+        document.getElementById('summary-seat').textContent = selectedSeat;
+        document.getElementById('summary-price').textContent = 'Bs ' + r.price.toFixed(2);
+        document.getElementById('summary-total').textContent = 'Bs ' + r.price.toFixed(2);
+        var pax = document.getElementById('pax-name').value.trim();
+        document.getElementById('summary-pax').textContent = pax === '' ? '—' : pax;
+    }
+
+    function confirmSale(e) {
+        e.preventDefault();
+        showToast('Venta registrada correctamente');
+    }
+
+    buildSeatGrid();
+    updateSummary();
+</script>
+{% endblock %}

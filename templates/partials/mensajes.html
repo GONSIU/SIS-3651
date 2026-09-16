@@ -1,7 +1,11 @@
 {% if messages %}
-<ul class="mensajes">
+<div class="space-y-2 mb-4">
   {% for message in messages %}
-    <li class="mensaje mensaje-{{ message.tags }}">{{ message }}</li>
+    <div class="font-body-sm text-body-sm rounded px-4 py-3
+      {% if message.tags == 'error' %}bg-error-container text-on-error-container
+      {% else %}bg-green-100 text-green-800{% endif %}">
+      {{ message }}
+    </div>
   {% endfor %}
-</ul>
+</div>
 {% endif %}

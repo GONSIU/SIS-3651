@@ -113,6 +113,19 @@
 <a class="nav-link {% block nav_incidencias %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'incidencias:listado' %}">
 <span class="material-symbols-outlined text-[20px]">warning</span>Incidencias
 </a>
+<div class="my-3 border-t border-white/10"></div>
+<a class="nav-link {% block nav_viajes %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'viajes:listado' %}">
+<span class="material-symbols-outlined text-[20px]">route</span>Viajes
+</a>
+<a class="nav-link {% block nav_flota %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'flota:listado' %}">
+<span class="material-symbols-outlined text-[20px]">directions_bus</span>Flota
+</a>
+<a class="nav-link {% block nav_personal %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'personal:listado' %}">
+<span class="material-symbols-outlined text-[20px]">badge</span>Personal
+</a>
+<a class="nav-link {% block nav_reportes %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'reportes:listado' %}">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>Reportes
+</a>
 </nav>
 </div>
 </aside>

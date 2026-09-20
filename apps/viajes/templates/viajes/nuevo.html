@@ -1,0 +1,69 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Programar Viaje — Trans Naser{% endblock %}
+{% block nav_viajes %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'viajes:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Programar Viaje</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Asigna un bus y un conductor a una ruta y horario existente.</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form class="space-y-5" onsubmit="return false;">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Ruta</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>La Paz → Cochabamba</option>
+<option>La Paz → Santa Cruz</option>
+<option>Cochabamba → Sucre</option>
+<option>Santa Cruz → Tarija</option>
+</select>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Horario</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>08:00 AM</option>
+<option>10:30 AM</option>
+<option>02:30 PM</option>
+</select>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Bus</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>BUS-014 — Leito (32 asientos)</option>
+<option>BUS-007 — Cama (28 asientos)</option>
+<option>BUS-021 — Semicama (36 asientos)</option>
+</select>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Conductor</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>Ramiro Choque</option>
+<option>Fernando Apaza</option>
+<option>Willy Condori</option>
+</select>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Fecha de salida</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" type="date" value="2026-09-19"/>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Estado inicial</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>Programado</option>
+</select>
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-2">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" onclick="genericSave(event, 'Viaje programado correctamente')" type="submit">Programar Viaje</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'viajes:listado' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

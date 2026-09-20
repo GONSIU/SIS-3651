@@ -4,5 +4,6 @@ from . import views
 app_name = "flota"
 
 urlpatterns = [
-    # path("", views.IndexView.as_view(), name="index"),
+    path("", views.ListaFlotaView.as_view(), name="listado"),
+    path("nuevo/", views.NuevoBusView.as_view(), name="nuevo"),
 ]

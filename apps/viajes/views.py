@@ -1,3 +1,11 @@
 from django.views.generic import TemplateView
 
-# Vistas de la app "viajes"
+
+class ListaViajesView(TemplateView):
+    """Maqueta visual — sin lógica de negocio todavía."""
+    template_name = "viajes/listado.html"
+
+
+class NuevoViajeView(TemplateView):
+    """Maqueta visual — sin lógica de negocio todavía."""
+    template_name = "viajes/nuevo.html"

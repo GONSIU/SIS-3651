@@ -1,0 +1,62 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nuevo Bus — Trans Naser{% endblock %}
+{% block nav_flota %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'flota:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Bus</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una unidad nueva en la flota.</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form class="space-y-5" onsubmit="return false;">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Placa</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 1234-ABC" type="text"/>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Tipo de bus</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>Leito</option>
+<option>Cama</option>
+<option>Semicama</option>
+</select>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Capacidad de pasajeros</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 32" type="number"/>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Capacidad de carga (kg)</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 1200" type="number"/>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Filas</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 8" type="number"/>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Columnas</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 4" type="number"/>
+</div>
+<div class="sm:col-span-2">
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Estado</label>
+<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
+<option>Activo</option>
+<option>Mantenimiento</option>
+<option>Fuera de Servicio</option>
+</select>
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-2">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" onclick="genericSave(event, 'Bus registrado correctamente')" type="submit">Guardar Bus</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'flota:listado' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

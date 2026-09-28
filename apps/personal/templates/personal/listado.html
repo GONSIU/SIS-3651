@@ -1,0 +1,74 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Personal — Trans Naser{% endblock %}
+{% block nav_personal %}active{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Personal</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Desempeño del personal de ventanilla — periodo actual.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<span class="font-label text-label-sm text-on-surface-variant">VENTANILLEROS ACTIVOS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">9</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
+<span class="font-label text-label-sm text-on-surface-variant">VENTAS DEL EQUIPO HOY</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">Bs 14,860</p>
+<span class="font-label text-label-sm text-green-700 flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[16px]">trending_up</span>+8% vs ayer</span>
+</div>
+<div class="rounded-lg p-4 border-l-4 border-signal-orange" style="background:#fff4ec">
+<span class="font-label text-label-sm text-on-surface-variant">RECLAMOS ABIERTOS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">2</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Empleado</th><th class="px-5 py-3">Terminal</th><th class="px-5 py-3">Ventas Hoy</th><th class="px-5 py-3">Monto Vendido</th><th class="px-5 py-3">Reclamos</th><th class="px-5 py-3">Desempeño</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+<tr>
+<td class="px-5 py-3 flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Karen+Vargas&background=0a192f&color=fff"/>
+<span class="font-label text-label-md text-deep-navy">Karen Vargas</span>
+</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Terminal La Paz</td>
+<td class="px-5 py-3 font-label">42</td>
+<td class="px-5 py-3 font-label">Bs 5,040</td>
+<td class="px-5 py-3 font-label">0</td>
+<td class="px-5 py-3"><div class="w-28 h-2 rounded-full bg-surface-container-highest"><div class="h-2 rounded-full bg-green-600" style="width:92%"></div></div></td>
+</tr>
+<tr>
+<td class="px-5 py-3 flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Marco+Tarqui&background=0a192f&color=fff"/>
+<span class="font-label text-label-md text-deep-navy">Marco Tarqui</span>
+</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Terminal La Paz</td>
+<td class="px-5 py-3 font-label">35</td>
+<td class="px-5 py-3 font-label">Bs 4,200</td>
+<td class="px-5 py-3 font-label">1</td>
+<td class="px-5 py-3"><div class="w-28 h-2 rounded-full bg-surface-container-highest"><div class="h-2 rounded-full bg-green-600" style="width:78%"></div></div></td>
+</tr>
+<tr>
+<td class="px-5 py-3 flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover" src="https://ui-avatars.com/api/?name=Daniela+Rios&background=0a192f&color=fff"/>
+<span class="font-label text-label-md text-deep-navy">Daniela Ríos</span>
+</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Terminal Cochabamba</td>
+<td class="px-5 py-3 font-label">28</td>
+<td class="px-5 py-3 font-label">Bs 3,120</td>
+<td class="px-5 py-3 font-label">1</td>
+<td class="px-5 py-3"><div class="w-28 h-2 rounded-full bg-surface-container-highest"><div class="h-2 rounded-full bg-amber-500" style="width:61%"></div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

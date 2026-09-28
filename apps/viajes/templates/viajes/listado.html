@@ -1,0 +1,87 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Viajes — Trans Naser{% endblock %}
+{% block nav_viajes %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Viajes</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Viajes programados: ruta, bus, horario y estado operativo.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors self-start" href="{% url 'viajes:nuevo' %}">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>Programar Viaje
+</a>
+</div>
+
+<div class="card-panel rounded-lg p-4 flex flex-wrap items-center gap-3">
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>ESTADO:</span>
+<select class="form-input-custom border border-outline-variant rounded px-3 py-1.5 bg-white text-on-surface"><option>Todos los Estados</option><option>Programado</option><option>En Curso</option><option>Retrasado</option><option>Completado</option><option>Cancelado</option></select>
+</div>
+<div class="flex items-center gap-2 font-label text-label-sm text-on-surface-variant">
+<span>FECHA:</span>
+<span class="border border-outline-variant rounded px-3 py-1.5 flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-[16px]">calendar_today</span>19 Sep 2026</span>
+</div>
+<button class="ml-auto border border-outline-variant rounded px-3 py-1.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">download</span>Exportar</button>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Salida Prog.</th><th class="px-5 py-3">Salida Real</th><th class="px-5 py-3">Ocupación</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Cochabamba</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">BUS-014 (Leito)</td>
+<td class="px-5 py-3 font-label">08:00 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">08:00 AM</td>
+<td class="px-5 py-3 font-label">28/32</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">PROGRAMADO</span></td>
+<td class="px-5 py-3 text-right"><button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Santa Cruz</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">BUS-007 (Cama)</td>
+<td class="px-5 py-3 font-label">10:30 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">10:52 AM</td>
+<td class="px-5 py-3 font-label">32/32</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">RETRASADO</span></td>
+<td class="px-5 py-3 text-right"><button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Cochabamba → Sucre</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">BUS-021 (Semicama)</td>
+<td class="px-5 py-3 font-label">07:15 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">—</td>
+<td class="px-5 py-3 font-label">19/28</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">EN CURSO</span></td>
+<td class="px-5 py-3 text-right"><button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">Santa Cruz → Tarija</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">BUS-003 (Leito)</td>
+<td class="px-5 py-3 font-label">06:00 AM</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">06:00 AM</td>
+<td class="px-5 py-3 font-label">25/32</td>
+<td class="px-5 py-3"><span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">COMPLETADO</span></td>
+<td class="px-5 py-3 text-right"><button class="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-surface-container-highest font-body-sm text-body-sm text-on-surface-variant">
+<span>Mostrando 1 a 4 de 24 viajes de hoy</span>
+<div class="flex items-center gap-1.5">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded bg-deep-navy text-white font-label text-label-sm">1</button>
+<button class="w-8 h-8 rounded border border-outline-variant font-label text-label-sm hover:border-deep-navy">2</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:border-deep-navy"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+{% endblock %}

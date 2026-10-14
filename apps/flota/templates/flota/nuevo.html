@@ -8,53 +8,46 @@
 <a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'flota:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
 <div>
 <h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Bus</h1>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una unidad nueva en la flota.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una unidad nueva en la flota. Los asientos se generan automáticamente según la capacidad.</p>
 </div>
 </div>
 
 <div class="card-panel rounded-lg p-6 max-w-2xl">
-<form class="space-y-5" onsubmit="return false;">
+<form method="post">
+{% csrf_token %}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Placa</label>
-<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 1234-ABC" type="text"/>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.placa.id_for_label }}">Placa</label>
+{{ form.placa }}
+{% if form.placa.errors %}<p class="text-body-sm text-error mt-1">{{ form.placa.errors.0 }}</p>{% endif %}
 </div>
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Tipo de bus</label>
-<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
-<option>Leito</option>
-<option>Cama</option>
-<option>Semicama</option>
-</select>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.nombre_tipo.id_for_label }}">Tipo de bus</label>
+{{ form.nombre_tipo }}
+{% if form.nombre_tipo.errors %}<p class="text-body-sm text-error mt-1">{{ form.nombre_tipo.errors.0 }}</p>{% endif %}
 </div>
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Capacidad de pasajeros</label>
-<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 32" type="number"/>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.capacidad_pasajeros.id_for_label }}">Capacidad de pasajeros</label>
+{{ form.capacidad_pasajeros }}
+{% if form.capacidad_pasajeros.errors %}<p class="text-body-sm text-error mt-1">{{ form.capacidad_pasajeros.errors.0 }}</p>{% endif %}
 </div>
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Capacidad de carga (kg)</label>
-<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 1200" type="number"/>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.pisos.id_for_label }}">Número de pisos</label>
+{{ form.pisos }}
 </div>
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Filas</label>
-<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 8" type="number"/>
-</div>
-<div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Columnas</label>
-<input class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5" placeholder="Ej. 4" type="number"/>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.capacidad_carga_kg.id_for_label }}">Capacidad de carga (kg)</label>
+{{ form.capacidad_carga_kg }}
+{% if form.capacidad_carga_kg.errors %}<p class="text-body-sm text-error mt-1">{{ form.capacidad_carga_kg.errors.0 }}</p>{% endif %}
 </div>
 <div class="sm:col-span-2">
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5">Estado</label>
-<select class="form-input-custom w-full border border-outline-variant rounded px-3 py-2.5 bg-white">
-<option>Activo</option>
-<option>Mantenimiento</option>
-<option>Fuera de Servicio</option>
-</select>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.estado.id_for_label }}">Estado</label>
+{{ form.estado }}
 </div>
 </div>
 
-<div class="flex items-center gap-3 pt-2">
-<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" onclick="genericSave(event, 'Bus registrado correctamente')" type="submit">Guardar Bus</button>
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Guardar Bus</button>
 <a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'flota:listado' %}">Cancelar</a>
 </div>
 </form>

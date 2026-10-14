@@ -31,9 +31,9 @@
 <span class="font-label text-label-sm text-on-surface-variant">BOLETOS HOY</span>
 <span class="material-symbols-outlined text-slate-blue text-[20px]">confirmation_number</span>
 </div>
-<p class="font-headline text-headline-lg text-deep-navy mt-2">1,248</p>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-green-600">trending_up</span>+12% vs ayer</p>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">{{ boletos_hoy }}</p>
 </div>
+<!-- ENCOMIENDAS: dato fijo — la app "encomiendas" todavía no tiene modelos reales -->
 <div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
 <div class="flex items-start justify-between">
 <span class="font-label text-label-sm text-on-surface-variant">ENCOMIENDAS</span>
@@ -47,9 +47,10 @@
 <span class="font-label text-label-sm text-on-surface-variant">RUTAS ACTIVAS</span>
 <span class="material-symbols-outlined text-slate-blue text-[20px]">alt_route</span>
 </div>
-<p class="font-headline text-headline-lg text-deep-navy mt-2">24 / 28</p>
-<div class="w-full h-1.5 bg-surface-container-highest rounded-full mt-2"><div class="h-1.5 bg-slate-blue rounded-full" style="width:86%"></div></div>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">{{ rutas_activas }} / {{ rutas_totales }}</p>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full mt-2"><div class="h-1.5 bg-slate-blue rounded-full" style="width:{{ rutas_activas_pct }}%"></div></div>
 </div>
+<!-- INCIDENCIAS: dato fijo — la app "incidencias" todavía no tiene modelos reales -->
 <div class="rounded-lg p-4 border-l-4 border-signal-orange" style="background:#fff4ec">
 <div class="flex items-start justify-between">
 <span class="font-label text-label-sm text-secondary">INCIDENCIAS</span>
@@ -64,7 +65,7 @@
 <div class="lg:col-span-2 card-panel rounded-lg overflow-hidden">
 <div class="flex items-center justify-between px-5 py-4 border-b border-surface-container-highest">
 <h3 class="font-headline text-headline-md text-deep-navy">Próximas Salidas</h3>
-<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange flex items-center gap-1" href="{% url 'ventas:nueva_venta' %}">Ver Todas<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange flex items-center gap-1" href="{% url 'viajes:listado' %}">Ver Todas<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left">
@@ -74,34 +75,21 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for viaje in proximas_salidas %}
 <tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Cochabamba</td>
-<td class="px-5 py-3 font-label">08:00 AM</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 1234-ABC</td>
-<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">45/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:90%"></div></div></div></td>
-<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida }}</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">Placa: {{ viaje.bus.placa }}</td>
+<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">{{ viaje.ocupacion_texto }}</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:{{ viaje.ocupacion_pct }}%"></div></div></div></td>
+<td class="px-5 py-3">
+{% if viaje.estado == "retrasado" %}<span class="font-label text-label-sm px-2 py-1 rounded-full bg-red-100 text-red-800">RETRASADO</span>
+{% elif viaje.estado == "cancelado" %}<span class="font-label text-label-sm px-2 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">CANCELADO</span>
+{% else %}<span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span>{% endif %}
+</td>
 </tr>
-<tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">La Paz → Santa Cruz</td>
-<td class="px-5 py-3 font-label">10:30 AM</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 5678-XYZ</td>
-<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">20/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:40%"></div></div></div></td>
-<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
-</tr>
-<tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">Cochabamba → Sucre</td>
-<td class="px-5 py-3 font-label">14:00 PM</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 9012-DEF</td>
-<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">48/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-signal-orange rounded-full" style="width:96%"></div></div></div></td>
-<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-red-100 text-red-800">RETRASADO</span></td>
-</tr>
-<tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">Santa Cruz → Tarija</td>
-<td class="px-5 py-3 font-label">18:00 PM</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">Placa: 3456-GHI</td>
-<td class="px-5 py-3"><div class="flex items-center gap-2"><span class="font-label">35/50</span><div class="w-16 h-1.5 bg-surface-container-highest rounded-full"><div class="h-1.5 bg-slate-blue rounded-full" style="width:70%"></div></div></div></td>
-<td class="px-5 py-3"><span class="font-label text-label-sm px-2 py-1 rounded-full bg-green-100 text-green-800">A TIEMPO</span></td>
-</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="5">No hay viajes programados para hoy.</td></tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
@@ -112,50 +100,21 @@
 <h3 class="font-headline text-headline-md text-deep-navy">Ventas Recientes</h3>
 </div>
 <div class="divide-y divide-surface-container-highest">
+{% for pasaje in ventas_recientes %}
 <div class="flex items-center gap-3 px-5 py-3.5">
 <div class="w-9 h-9 rounded-full bg-tertiary-container/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-slate-blue">confirmation_number</span></div>
 <div class="flex-1 min-w-0">
-<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Boleto: VIP - La Paz/Santa Cruz</p>
-<p class="font-label text-label-sm text-on-surface-variant">Caja 02 · Operador</p>
+<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">{{ pasaje.codigo_pasaje }} — {{ pasaje.viaje.ruta.origen.ciudad }}/{{ pasaje.viaje.ruta.destino.ciudad }}</p>
+<p class="font-label text-label-sm text-on-surface-variant">{{ pasaje.get_canal_display }} · {{ pasaje.nombre_pasajero }}</p>
 </div>
 <div class="text-right shrink-0">
-<p class="font-label text-label-md text-deep-navy">Bs 200.00</p>
-<p class="font-label text-label-sm text-on-surface-variant">Hace 2 min</p>
+<p class="font-label text-label-md text-deep-navy">Bs {{ pasaje.precio }}</p>
+<p class="font-label text-label-sm text-on-surface-variant">{{ pasaje.created_at|timesince }}</p>
 </div>
 </div>
-<div class="flex items-center gap-3 px-5 py-3.5">
-<div class="w-9 h-9 rounded-full bg-signal-orange/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-signal-orange">package_2</span></div>
-<div class="flex-1 min-w-0">
-<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Encomienda: #1583</p>
-<p class="font-label text-label-sm text-on-surface-variant">Almacén Centro</p>
-</div>
-<div class="text-right shrink-0">
-<p class="font-label text-label-md text-deep-navy">Bs 45.00</p>
-<p class="font-label text-label-sm text-on-surface-variant">Hace 15 min</p>
-</div>
-</div>
-<div class="flex items-center gap-3 px-5 py-3.5">
-<div class="w-9 h-9 rounded-full bg-tertiary-container/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-slate-blue">confirmation_number</span></div>
-<div class="flex-1 min-w-0">
-<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Boleto: Estándar - Cochabamba/Sucre</p>
-<p class="font-label text-label-sm text-on-surface-variant">Web · Pago con Tarjeta</p>
-</div>
-<div class="text-right shrink-0">
-<p class="font-label text-label-md text-deep-navy">Bs 90.00</p>
-<p class="font-label text-label-sm text-on-surface-variant">Hace 22 min</p>
-</div>
-</div>
-<div class="flex items-center gap-3 px-5 py-3.5">
-<div class="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[18px] text-on-surface-variant">task_alt</span></div>
-<div class="flex-1 min-w-0">
-<p class="font-body-sm text-body-sm text-deep-navy font-medium truncate">Cierre de Lote — Caja 02</p>
-<p class="font-label text-label-sm text-on-surface-variant">Sistema Automático</p>
-</div>
-<div class="text-right shrink-0">
-<p class="font-label text-label-md text-green-700">OK</p>
-<p class="font-label text-label-sm text-on-surface-variant">Hace 1 h</p>
-</div>
-</div>
+{% empty %}
+<div class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant">Todavía no hay ventas registradas.</div>
+{% endfor %}
 </div>
 </div>
 </div>

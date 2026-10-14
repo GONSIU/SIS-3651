@@ -6,10 +6,23 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
+from django.views.generic import DetailView
 
 from apps.viajes.models import Viaje, AsientoViaje
 from .forms import VentaForm
 from .models import Pasaje, Pago, Comprobante
+
+# Datos del emisor: fijos para toda la empresa (no hay multi-sucursal en el
+# alcance del proyecto). Son datos ficticios para fines académicos: Trans
+# Naser no está registrada ante Impuestos Nacionales de Bolivia.
+EMPRESA_FISCAL = {
+    "razon_social": "TRANS NASER S.R.L.",
+    "nit": "0000000000000",
+    "punto_venta": "Punto de Venta 0",
+    "sucursal": "Casa Matriz",
+    "direccion": "Terminal Bimodal, Av. del Ejército",
+    "numero_autorizacion": "00000000000000000000000000000000",
+}
 
 
 class NuevaVentaView(View):
@@ -110,7 +123,24 @@ class NuevaVentaView(View):
                         f"Pasaje {pasaje.codigo_pasaje} vendido correctamente "
                         f"(asiento {asiento_viaje.asiento.numero}).",
                     )
-                    return redirect(f"{reverse('ventas:nueva_venta')}?viaje={viaje.id}")
+                    return redirect("ventas:boleto", pk=pasaje.pk)
 
         return render(request, self.template_name, self._contexto(request, form=form, viaje_seleccionado=viaje))
-    
+
+
+class VerBoletoView(DetailView):
+    model = Pasaje
+    template_name = "ventas/boleto.html"
+    context_object_name = "pasaje"
+
+    def get_queryset(self):
+        return Pasaje.objects.select_related(
+            "viaje__ruta__origen", "viaje__ruta__destino", "viaje__bus",
+            "viaje__horario", "asiento_viaje__asiento", "comprobante", "vendido_por",
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["empresa"] = EMPRESA_FISCAL
+        context["pago"] = self.object.pagos.first()
+        return context

@@ -14,12 +14,13 @@ class Usuario(AbstractUser):
     telefono = models.CharField(max_length=20, blank=True)
     ci = models.CharField(max_length=20, unique=True, null=True, blank=True)
 
-    # Descomenta esta relación una vez que definas el modelo Terminal
-    # en apps/rutas/models.py (útil para asignar ventanilleros a una terminal):
-    #
-    # terminal_asignado = models.ForeignKey(
-    #     "rutas.Terminal", null=True, blank=True, on_delete=models.SET_NULL
-    # )
+    terminal_asignado = models.ForeignKey(
+        "rutas.Terminal",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="empleados_asignados",
+    )
 
     def __str__(self):
         return self.get_full_name() or self.username

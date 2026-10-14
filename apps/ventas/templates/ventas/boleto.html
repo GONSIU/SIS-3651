@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Boleto {{ pasaje.codigo_pasaje }} — Trans Naser</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+    body { font-family: 'Inter', sans-serif; background: #e9eaef; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .ticket { width: 320px; }
+    .qr-placeholder {
+        background-image:
+            repeating-linear-gradient(0deg, #0a192f 0 3px, transparent 3px 6px),
+            repeating-linear-gradient(90deg, #0a192f 0 3px, transparent 3px 6px);
+        background-blend-mode: multiply;
+    }
+    @media print {
+        body { background: #fff; }
+        .no-print { display: none !important; }
+        .ticket { width: 100%; box-shadow: none !important; }
+    }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+
+<div class="no-print w-full max-w-sm flex items-center justify-between mb-4">
+<a href="{% url 'ventas:nueva_venta' %}" class="text-sm text-[#0a192f] hover:underline">&larr; Volver a ventas</a>
+<button onclick="window.print()" class="bg-[#f47920] hover:bg-[#d9671a] text-white text-sm font-semibold px-4 py-2 rounded shadow-sm">Imprimir boleto</button>
+</div>
+
+<div class="ticket bg-white rounded shadow-lg p-5 text-[#1a1c1e]">
+
+<div class="text-center border-b border-dashed border-gray-400 pb-3 mb-3">
+<p class="text-lg font-bold tracking-wide" style="color:#0a192f">TRANS NASER</p>
+<p class="text-[10px] text-gray-500 mt-0.5">Sistema de Venta de Pasajes y Encomiendas</p>
+</div>
+
+<div class="text-center mb-3">
+<p class="text-xs font-bold">BOLETO DE VIAJE</p>
+<p class="text-[10px] text-gray-500">(Documento no válido como factura oficial — proyecto académico)</p>
+</div>
+
+<div class="text-[10px] leading-snug mb-3 border-b border-dashed border-gray-400 pb-3">
+<p class="font-semibold">{{ empresa.razon_social }}</p>
+<p>{{ empresa.sucursal }} — {{ empresa.punto_venta }}</p>
+<p>{{ empresa.direccion }}</p>
+<p class="mono mt-1">NIT: {{ empresa.nit }}</p>
+</div>
+
+<div class="text-[10px] mono leading-snug mb-3 border-b border-dashed border-gray-400 pb-3">
+<p>FACTURA N°: {{ pasaje.comprobante.numero_comprobante }}</p>
+<p>COD. AUTORIZACIÓN:</p>
+<p class="break-all">{{ empresa.numero_autorizacion }}</p>
+<p class="mt-1">CÓDIGO DE CONTROL:</p>
+<p>{{ pasaje.comprobante.codigo_control }}</p>
+</div>
+
+<div class="text-[11px] leading-snug mb-3 border-b border-dashed border-gray-400 pb-3">
+<p><span class="text-gray-500">E-TICKET:</span> <span class="mono font-semibold">{{ pasaje.codigo_pasaje }}</span></p>
+<p><span class="text-gray-500">Emisión:</span> {{ pasaje.created_at|date:"d/m/Y H:i" }}</p>
+<p><span class="text-gray-500">Emitido por:</span> {% if pasaje.vendido_por %}{{ pasaje.vendido_por.get_full_name|default:pasaje.vendido_por.username }}{% else %}—{% endif %}</p>
+</div>
+
+<div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] mb-3 border-b border-dashed border-gray-400 pb-3">
+<div><p class="text-gray-500">Ruta</p><p class="font-semibold">{{ pasaje.viaje.ruta.origen.ciudad }} → {{ pasaje.viaje.ruta.destino.ciudad }}</p></div>
+<div><p class="text-gray-500">Bus</p><p class="font-semibold">{{ pasaje.viaje.bus.placa }}</p></div>
+<div><p class="text-gray-500">Fecha</p><p class="font-semibold">{{ pasaje.viaje.fecha_salida|date:"d/m/Y" }}</p></div>
+<div><p class="text-gray-500">Hora</p><p class="font-semibold">{{ pasaje.viaje.horario.hora_salida }}</p></div>
+<div><p class="text-gray-500">Tipo de bus</p><p class="font-semibold">{{ pasaje.viaje.bus.nombre_tipo }}</p></div>
+<div><p class="text-gray-500">Asiento</p><p class="font-semibold">{{ pasaje.asiento_viaje.asiento.numero }}</p></div>
+</div>
+
+<div class="text-[11px] mb-3 border-b border-dashed border-gray-400 pb-3">
+<p class="text-gray-500 mb-0.5">Pasajero</p>
+<p class="font-semibold">{{ pasaje.nombre_pasajero }}</p>
+{% if pasaje.cliente_ci %}<p class="text-gray-500 mono">CI: {{ pasaje.cliente_ci }}</p>{% endif %}
+</div>
+
+<div class="text-[11px] space-y-1 mb-3 border-b border-dashed border-gray-400 pb-3">
+<div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="mono">Bs {{ pasaje.precio }}</span></div>
+<div class="flex justify-between"><span class="text-gray-500">Descuento</span><span class="mono">Bs 0.00</span></div>
+<div class="flex justify-between font-bold text-sm mt-1"><span>TOTAL</span><span class="mono">Bs {{ pasaje.precio }}</span></div>
+{% if pago %}<div class="flex justify-between text-gray-500 mt-1"><span>Método de pago</span><span>{{ pago.get_metodo_display }}</span></div>{% endif %}
+</div>
+
+<div class="flex flex-col items-center gap-2 mb-3">
+<div class="qr-placeholder w-20 h-20"></div>
+<p class="text-[9px] text-gray-400 text-center">Representación gráfica de un documento generado por el sistema académico Trans Naser.</p>
+</div>
+
+<p class="text-[9px] text-gray-400 text-center leading-snug">Este boleto es un documento de prueba generado con fines académicos (UTO — Ingeniería de Sistemas). No tiene validez tributaria.</p>
+
+</div>
+</body>
+</html>

@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from apps.viajes.models import Viaje, AsientoViaje
@@ -106,13 +108,20 @@ class Comprobante(models.Model):
     pasaje = models.OneToOneField(Pasaje, related_name="comprobante", on_delete=models.CASCADE)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default="recibo")
     numero_comprobante = models.CharField(max_length=30, unique=True, blank=True)
+    # Dato fiscal ficticio (no proviene de Impuestos Nacionales): solo para que el
+    # boleto impreso se vea como una factura real. Se genera solo, no se captura.
+    codigo_control = models.CharField(max_length=40, blank=True)
     archivo_pdf = models.FileField(upload_to="comprobantes/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.numero_comprobante:
             self.numero_comprobante = generar_codigo("CMP")
+        if not self.codigo_control:
+            bloques = [uuid.uuid4().hex[:4].upper() for _ in range(4)]
+            self.codigo_control = "-".join(bloques)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.numero_comprobante} ({self.pasaje.codigo_pasaje})"
+    

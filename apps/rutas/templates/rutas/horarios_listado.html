@@ -1,0 +1,41 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Horarios &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Horarios</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ ruta.origen }} &rarr; {{ ruta.destino }}</p>
+</div>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors self-start" href="{% url 'rutas:horario_nuevo' ruta.pk %}">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>Nuevo Horario
+</a>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Hora de salida</th><th class="px-5 py-3">Dias</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for horario in horarios %}
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3 font-label">{{ horario.dias_semana }}</td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="2">Esta ruta todavia no tiene horarios.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

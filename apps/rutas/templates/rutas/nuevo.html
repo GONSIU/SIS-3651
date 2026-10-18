@@ -1,0 +1,58 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nueva Ruta &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Ruta</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una ruta entre dos terminales. Los horarios se agregan despues desde el listado.</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
+{% endif %}
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form method="post">
+{% csrf_token %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.origen.id_for_label }}">Terminal de origen</label>
+{{ form.origen }}
+{% if form.origen.errors %}<p class="text-body-sm text-error mt-1">{{ form.origen.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.destino.id_for_label }}">Terminal de destino</label>
+{{ form.destino }}
+{% if form.destino.errors %}<p class="text-body-sm text-error mt-1">{{ form.destino.errors.0 }}</p>{% endif %}
+</div>
+<div class="sm:col-span-2 -mt-2">
+<a class="inline-flex items-center gap-1 font-label text-label-sm text-signal-orange hover:text-secondary" href="{% url 'rutas:terminal_nuevo' %}"><span class="material-symbols-outlined text-[18px]">add</span>Nueva Terminal</a>
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.distancia_km.id_for_label }}">Distancia (km)</label>
+{{ form.distancia_km }}
+{% if form.distancia_km.errors %}<p class="text-body-sm text-error mt-1">{{ form.distancia_km.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.duracion_minutos.id_for_label }}">Duracion estimada (minutos)</label>
+{{ form.duracion_minutos }}
+{% if form.duracion_minutos.errors %}<p class="text-body-sm text-error mt-1">{{ form.duracion_minutos.errors.0 }}</p>{% endif %}
+</div>
+<div class="sm:col-span-2 flex items-center gap-2">
+{{ form.activa }}
+<label class="font-label text-label-sm text-on-surface-variant" for="{{ form.activa.id_for_label }}">Ruta activa</label>
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Guardar Ruta</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'rutas:listado' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

@@ -103,7 +103,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "usuarios:login"
-LOGIN_REDIRECT_URL = "rutas:index"
+LOGIN_REDIRECT_URL = "core:index"
 LOGOUT_REDIRECT_URL = "usuarios:login"
 
 #para ngrok

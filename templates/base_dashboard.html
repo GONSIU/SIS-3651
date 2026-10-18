@@ -114,6 +114,9 @@
 <span class="material-symbols-outlined text-[20px]">warning</span>Incidencias
 </a>
 <div class="my-3 border-t border-white/10"></div>
+<a class="nav-link {% block nav_rutas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'rutas:listado' %}">
+<span class="material-symbols-outlined text-[20px]">alt_route</span>Rutas
+</a>
 <a class="nav-link {% block nav_viajes %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'viajes:listado' %}">
 <span class="material-symbols-outlined text-[20px]">route</span>Viajes
 </a>

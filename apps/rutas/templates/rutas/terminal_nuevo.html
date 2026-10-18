@@ -1,0 +1,46 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nueva Terminal &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:nuevo' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Terminal</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una terminal. Al guardar vuelves a Nueva Ruta con la terminal disponible en los selectores.</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
+{% endif %}
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form method="post">
+{% csrf_token %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.nombre.id_for_label }}">Nombre</label>
+{{ form.nombre }}
+{% if form.nombre.errors %}<p class="text-body-sm text-error mt-1">{{ form.nombre.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.ciudad.id_for_label }}">Ciudad</label>
+{{ form.ciudad }}
+{% if form.ciudad.errors %}<p class="text-body-sm text-error mt-1">{{ form.ciudad.errors.0 }}</p>{% endif %}
+</div>
+<div class="sm:col-span-2">
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.direccion.id_for_label }}">Direccion (opcional)</label>
+{{ form.direccion }}
+{% if form.direccion.errors %}<p class="text-body-sm text-error mt-1">{{ form.direccion.errors.0 }}</p>{% endif %}
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Guardar Terminal</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'rutas:nuevo' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

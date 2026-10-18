@@ -1,0 +1,46 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nuevo Horario &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:horarios' ruta.pk %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Horario</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Agrega una hora de salida a una ruta. Dias como letras separadas por coma: L,M,X,J,V,S,D.</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
+{% endif %}
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form method="post">
+{% csrf_token %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div class="sm:col-span-2">
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.ruta.id_for_label }}">Ruta</label>
+{{ form.ruta }}
+{% if form.ruta.errors %}<p class="text-body-sm text-error mt-1">{{ form.ruta.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.hora_salida.id_for_label }}">Hora de salida</label>
+{{ form.hora_salida }}
+{% if form.hora_salida.errors %}<p class="text-body-sm text-error mt-1">{{ form.hora_salida.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.dias_semana.id_for_label }}">Dias de la semana</label>
+{{ form.dias_semana }}
+{% if form.dias_semana.errors %}<p class="text-body-sm text-error mt-1">{{ form.dias_semana.errors.0 }}</p>{% endif %}
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Guardar Horario</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'rutas:horarios' ruta.pk %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

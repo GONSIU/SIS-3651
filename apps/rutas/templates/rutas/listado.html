@@ -1,0 +1,62 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Rutas &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Rutas</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Rutas entre terminales, su distancia, duracion y horarios de salida.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 shadow-sm transition-colors self-start" href="{% url 'rutas:nuevo' %}">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>Nueva Ruta
+</a>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<span class="font-label text-label-sm text-on-surface-variant">TOTAL DE RUTAS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ total_rutas }}</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
+<span class="font-label text-label-sm text-on-surface-variant">ACTIVAS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ total_activas }}</p>
+</div>
+<div class="rounded-lg p-4 border-l-4 border-signal-orange" style="background:#fff4ec">
+<span class="font-label text-label-sm text-on-surface-variant">HORARIOS REGISTRADOS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ total_horarios }}</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Distancia</th><th class="px-5 py-3">Duracion</th><th class="px-5 py-3">Horarios</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for ruta in rutas %}
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ ruta.origen }} &rarr; {{ ruta.destino }}</td>
+<td class="px-5 py-3 font-label">{% if ruta.distancia_km %}{{ ruta.distancia_km }} km{% else %}&mdash;{% endif %}</td>
+<td class="px-5 py-3 font-label">{% if ruta.duracion_minutos %}{{ ruta.duracion_minutos }} min{% else %}&mdash;{% endif %}</td>
+<td class="px-5 py-3 font-label"><a class="text-deep-navy hover:text-signal-orange underline" href="{% url 'rutas:horarios' ruta.pk %}">{{ ruta.num_horarios }}</a></td>
+<td class="px-5 py-3">
+{% if ruta.activa %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ACTIVA</span>
+{% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">INACTIVA</span>{% endif %}
+</td>
+<td class="px-5 py-3 text-right">
+<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" href="{% url 'rutas:horario_nuevo' ruta.pk %}"><span class="material-symbols-outlined text-[18px]">add</span>Horario</a>
+</td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">Todavia no hay rutas registradas.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

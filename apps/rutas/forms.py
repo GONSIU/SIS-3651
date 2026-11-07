@@ -1,10 +1,8 @@
 from django import forms
-from .models import Terminal, Ruta, Horario
+from .models import DIAS_VALIDOS, Terminal, Ruta, Horario
 
 INPUT_CLASSES = "form-input-custom w-full border border-outline-variant rounded px-3 py-2.5"
 SELECT_CLASSES = INPUT_CLASSES + " bg-white"
-
-DIAS_VALIDOS = ["L", "M", "X", "J", "V", "S", "D"]
 
 
 class TerminalForm(forms.ModelForm):
@@ -50,13 +48,18 @@ class RutaForm(forms.ModelForm):
 
 
 class HorarioForm(forms.ModelForm):
+    # Mas largo que el modelo: "l, m, x" llega con espacios y clean_dias_semana los quita.
+    dias_semana = forms.CharField(
+        max_length=30,
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. L,M,X,J,V"}),
+    )
+
     class Meta:
         model = Horario
         fields = ["ruta", "hora_salida", "dias_semana"]
         widgets = {
             "ruta": forms.Select(attrs={"class": SELECT_CLASSES}),
             "hora_salida": forms.TimeInput(attrs={"class": INPUT_CLASSES, "type": "time"}, format="%H:%M"),
-            "dias_semana": forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. L,M,X,J,V"}),
         }
 
     def clean_dias_semana(self) -> str:

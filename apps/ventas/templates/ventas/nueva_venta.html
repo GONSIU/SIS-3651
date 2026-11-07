@@ -47,7 +47,9 @@ No hay viajes programados todavía. <a class="text-deep-navy underline" href="{%
 <input name="viaje_id" type="hidden" value="{{ viaje_seleccionado.id }}"/>
 
 {% if form.non_field_errors %}
-<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 mb-4">{{ form.non_field_errors.0 }}</div>
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 mb-4">
+{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+</div>
 {% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -63,14 +65,22 @@ No hay viajes programados todavía. <a class="text-deep-navy underline" href="{%
 <div class="space-y-1.5">
 <label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.cliente_ci.id_for_label }}">CI / Pasaporte</label>
 {{ form.cliente_ci }}
+{% if form.cliente_ci.errors %}<p class="text-body-sm text-error">{{ form.cliente_ci.errors.0 }}</p>{% endif %}
 </div>
 <div class="space-y-1.5">
 <label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.telefono.id_for_label }}">Teléfono (Opcional)</label>
 {{ form.telefono }}
+{% if form.telefono.errors %}<p class="text-body-sm text-error">{{ form.telefono.errors.0 }}</p>{% endif %}
 </div>
 <div class="space-y-1.5">
 <label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.metodo_pago.id_for_label }}">Método de Pago</label>
 {{ form.metodo_pago }}
+{% if form.metodo_pago.errors %}<p class="text-body-sm text-error">{{ form.metodo_pago.errors.0 }}</p>{% endif %}
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.referencia_externa.id_for_label }}">Referencia de Pago (QR, tarjeta o transferencia)</label>
+{{ form.referencia_externa }}
+{% if form.referencia_externa.errors %}<p class="text-body-sm text-error">{{ form.referencia_externa.errors.0 }}</p>{% endif %}
 </div>
 </div>
 </div>

@@ -10,11 +10,8 @@ class BusForm(forms.ModelForm):
         model = Bus
         fields = ["placa", "nombre_tipo", "capacidad_pasajeros", "pisos", "capacidad_carga_kg", "estado"]
         widgets = {
-            "placa": forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 1234-ABC"}),
-            "nombre_tipo": forms.Select(
-                choices=[("Leito", "Leito"), ("Cama", "Cama"), ("Semicama", "Semicama")],
-                attrs={"class": SELECT_CLASSES},
-            ),
+            "placa": forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 1234ABC"}),
+            "nombre_tipo": forms.Select(attrs={"class": SELECT_CLASSES}),
             "capacidad_pasajeros": forms.NumberInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 32"}),
             "pisos": forms.Select(attrs={"class": SELECT_CLASSES}),
             "capacidad_carga_kg": forms.NumberInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 1200"}),

@@ -1,0 +1,5 @@
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="{{ campo.id_for_label }}">{{ etiqueta }}</label>
+{{ campo }}
+{% if campo.errors %}<p class="text-body-sm text-error mt-1">{{ campo.errors.0 }}</p>{% endif %}
+</div>

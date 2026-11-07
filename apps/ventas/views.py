@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -32,7 +33,7 @@ class NuevaVentaView(View):
         hoy = timezone.localdate()
         return (
             Viaje.objects.filter(fecha_salida__gte=hoy)
-            .exclude(estado="cancelado")
+            .exclude(estado__in=["cancelado", "completado"])
             .select_related("ruta__origen", "ruta__destino", "bus", "horario")
             .order_by("fecha_salida", "horario__hora_salida")
         )
@@ -100,7 +101,7 @@ class NuevaVentaView(View):
                 if asiento_viaje.estado != "disponible":
                     form.add_error(None, "Ese asiento ya no está disponible. Elige otro.")
                 else:
-                    pasaje = Pasaje.objects.create(
+                    pasaje = Pasaje(
                         viaje=viaje,
                         asiento_viaje=asiento_viaje,
                         cliente_nombre=form.cleaned_data["cliente_nombre"],
@@ -110,20 +111,28 @@ class NuevaVentaView(View):
                         canal="ventanilla",
                         precio=form.cleaned_data["precio"],
                     )
-                    pasaje.marcar_como_vendido()
-                    Pago.objects.create(
-                        pasaje=pasaje,
-                        metodo=form.cleaned_data["metodo_pago"],
-                        monto=form.cleaned_data["precio"],
-                    )
-                    Comprobante.objects.create(pasaje=pasaje, tipo="recibo")
+                    try:
+                        pasaje.full_clean()
+                    except ValidationError as error:
+                        for mensaje in error.messages:
+                            form.add_error(None, mensaje)
+                    else:
+                        pasaje.save()
+                        pasaje.marcar_como_vendido()
+                        Pago.objects.create(
+                            pasaje=pasaje,
+                            metodo=form.cleaned_data["metodo_pago"],
+                            monto=form.cleaned_data["precio"],
+                            referencia_externa=form.cleaned_data["referencia_externa"],
+                        )
+                        Comprobante.objects.create(pasaje=pasaje, tipo="recibo")
 
-                    messages.success(
-                        request,
-                        f"Pasaje {pasaje.codigo_pasaje} vendido correctamente "
-                        f"(asiento {asiento_viaje.asiento.numero}).",
-                    )
-                    return redirect("ventas:boleto", pk=pasaje.pk)
+                        messages.success(
+                            request,
+                            f"Pasaje {pasaje.codigo_pasaje} vendido correctamente "
+                            f"(asiento {asiento_viaje.asiento.numero}).",
+                        )
+                        return redirect("ventas:boleto", pk=pasaje.pk)
 
         return render(request, self.template_name, self._contexto(request, form=form, viaje_seleccionado=viaje))
 

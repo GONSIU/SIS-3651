@@ -33,14 +33,13 @@
 </div>
 <p class="font-headline text-headline-lg text-deep-navy mt-2">{{ boletos_hoy }}</p>
 </div>
-<!-- ENCOMIENDAS: dato fijo — la app "encomiendas" todavía no tiene modelos reales -->
 <div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
 <div class="flex items-start justify-between">
 <span class="font-label text-label-sm text-on-surface-variant">ENCOMIENDAS</span>
 <span class="material-symbols-outlined text-slate-blue text-[20px]">package_2</span>
 </div>
-<p class="font-headline text-headline-lg text-deep-navy mt-2">432</p>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">local_shipping</span>85% despachadas</p>
+<p class="font-headline text-headline-lg text-deep-navy mt-2">{{ encomiendas_total }}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">local_shipping</span>{{ encomiendas_despachadas_pct }}% despachadas</p>
 </div>
 <div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
 <div class="flex items-start justify-between">

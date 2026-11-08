@@ -2,6 +2,8 @@
 from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.generic import TemplateView
+
+from apps.core.mixins import RolRequeridoMixin
 from apps.rutas.models import Ruta
 from apps.viajes.models import Viaje
 from apps.ventas.models import Pasaje
@@ -10,7 +12,8 @@ from apps.encomiendas.models import Encomienda
 def root_redirect(request):
     return redirect("usuarios:login")  # usa el namespace de la app
 
-class IndexView(TemplateView):
+class IndexView(RolRequeridoMixin, TemplateView):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     template_name = "core/index.html"
 
     def get_context_data(self, **kwargs):

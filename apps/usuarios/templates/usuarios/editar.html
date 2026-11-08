@@ -1,0 +1,52 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Editar Usuario &mdash; Trans Naser{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'usuarios:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Editar Usuario</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Cambia el rol, el terminal o el estado de la cuenta. Para dar de baja, desactivala: no se borra.</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-body-sm text-body-sm">
+<div><dt class="font-label text-label-sm text-on-surface-variant">USUARIO</dt><dd class="text-deep-navy font-label text-label-md mt-0.5">{{ usuario.username }}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant">NOMBRE</dt><dd class="mt-0.5">{{ usuario.get_full_name|default:"&mdash;" }}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant">CI</dt><dd class="mt-0.5">{{ usuario.ci|default:"&mdash;" }}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant">CORREO</dt><dd class="mt-0.5">{{ usuario.email|default:"&mdash;" }}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant">FECHA DE ALTA</dt><dd class="mt-0.5">{{ usuario.date_joined|date:"d/m/Y" }}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant">ULTIMO INGRESO</dt><dd class="mt-0.5">{% if usuario.last_login %}{{ usuario.last_login|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</dd></div>
+</dl>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
+{% endif %}
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form method="post" novalidate>
+{% csrf_token %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+{% include "usuarios/_campo.html" with campo=form.rol %}
+{% include "usuarios/_campo.html" with campo=form.terminal_asignado %}
+<div class="sm:col-span-2">
+<div class="flex items-center gap-2">
+{{ form.is_active }}
+<label class="font-label text-label-sm text-on-surface-variant" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+</div>
+{% for error in form.is_active.errors %}<p class="text-body-sm text-error mt-1">{{ error }}</p>{% endfor %}
+<p class="text-body-sm text-on-surface-variant mt-1">Una cuenta inactiva no puede iniciar sesion, pero su historial (ventas, encomiendas) se conserva.</p>
+</div>
+</div>
+
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Guardar Cambios</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'usuarios:listado' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

@@ -1,3 +1,5 @@
+import importlib
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -89,3 +91,50 @@ class RegistroClienteFormTests(TestCase):
         form = RegistroClienteForm(data=self.datos(first_name="as12"))
         self.assertFalse(form.is_valid())
         self.assertIn("first_name", form.errors)
+
+
+class UsuarioManagerTests(TestCase):
+    def test_create_superuser_asigna_rol_admin(self):
+        usuario = Usuario.objects.create_superuser("root", "root@example.com", "clave-Segura-913")
+        self.assertEqual(usuario.rol, "admin")
+        self.assertTrue(usuario.is_superuser)
+
+    def test_create_superuser_rechaza_otro_rol(self):
+        with self.assertRaises(ValueError):
+            Usuario.objects.create_superuser("root", password="x", rol="cliente")
+
+    def test_create_user_mantiene_rol_por_defecto(self):
+        self.assertEqual(Usuario.objects.create_user("ana").rol, "cliente")
+
+
+class SuperusuariosAAdminMigrationTests(TestCase):
+    """Prueba la funcion de la migracion 0005 con el registro de apps actual."""
+
+    def test_pasa_superusuarios_a_admin(self):
+        from django.apps import apps as registro
+
+        migracion = importlib.import_module("apps.usuarios.migrations.0005_superusuarios_a_admin")
+        superusuario = Usuario.objects.create(username="root", is_superuser=True, rol="cliente")
+        cliente = Usuario.objects.create(username="ana", rol="cliente")
+
+        migracion.superusuarios_a_admin(registro, None)
+
+        superusuario.refresh_from_db()
+        cliente.refresh_from_db()
+        self.assertEqual(superusuario.rol, "admin")
+        self.assertEqual(cliente.rol, "cliente")
+
+
+class EsUltimoAdminActivoTests(TestCase):
+    def test_casos(self):
+        admin = Usuario.objects.create(username="admin1", rol="admin")
+        self.assertTrue(admin.es_ultimo_admin_activo())
+
+        Usuario.objects.create(username="admin2", rol="admin", is_active=False)
+        self.assertTrue(admin.es_ultimo_admin_activo(), "un admin inactivo no cuenta")
+
+        Usuario.objects.create(username="admin3", rol="admin")
+        self.assertFalse(admin.es_ultimo_admin_activo())
+
+        cliente = Usuario.objects.create(username="ana")
+        self.assertFalse(cliente.es_ultimo_admin_activo())

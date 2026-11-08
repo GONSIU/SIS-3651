@@ -1,0 +1,44 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nuevo Usuario &mdash; Trans Naser{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'usuarios:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Usuario</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Crea una cuenta de personal con una contrasena temporal. Los clientes se registran desde la pagina publica.</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
+{% endif %}
+
+<div class="card-panel rounded-lg p-6 max-w-2xl">
+<form method="post" novalidate>
+{% csrf_token %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+{% include "usuarios/_campo.html" with campo=form.username %}
+{% include "usuarios/_campo.html" with campo=form.email %}
+{% include "usuarios/_campo.html" with campo=form.first_name %}
+{% include "usuarios/_campo.html" with campo=form.last_name %}
+{% include "usuarios/_campo.html" with campo=form.ci %}
+{% include "usuarios/_campo.html" with campo=form.telefono %}
+{% include "usuarios/_campo.html" with campo=form.rol %}
+{% include "usuarios/_campo.html" with campo=form.terminal_asignado %}
+<div class="sm:col-span-2">
+{% include "usuarios/_campo.html" with campo=form.password_temporal %}
+<p class="text-body-sm text-on-surface-variant mt-1">Comunicala al usuario por un medio seguro. Despues no se puede volver a ver.</p>
+</div>
+<p class="sm:col-span-2 text-body-sm text-on-surface-variant -mt-2">Ventanillero y supervisor necesitan un terminal asignado.</p>
+</div>
+
+<div class="flex items-center gap-3 pt-5">
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Crear Usuario</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{% url 'usuarios:listado' %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

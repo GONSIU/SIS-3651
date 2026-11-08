@@ -8,9 +8,13 @@
 <a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'personal:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
 <div>
 <h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Empleado</h1>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Crea la ficha laboral de un usuario existente. El terminal se toma del usuario.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra el cargo y la fecha de ingreso de un usuario de personal. La cuenta (usuario, contrasena, rol y terminal) se crea antes en Usuarios.</p>
 </div>
 </div>
+
+{% if not hay_candidatos %}
+<div class="bg-surface-container-low text-on-surface-variant text-body-sm rounded px-4 py-3 max-w-2xl">No hay usuarios de personal sin ficha. Un administrador debe crear primero la cuenta en Usuarios.</div>
+{% endif %}
 
 {% if form.non_field_errors %}
 <div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-2xl">{{ form.non_field_errors.0 }}</div>
@@ -24,6 +28,7 @@
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.usuario.id_for_label }}">Usuario</label>
 {{ form.usuario }}
 {% if form.usuario.errors %}<p class="text-body-sm text-error mt-1">{{ form.usuario.errors.0 }}</p>{% endif %}
+<p class="text-body-sm text-on-surface-variant mt-1">Solo aparecen usuarios activos de personal que aun no tienen ficha.</p>
 </div>
 <div>
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.cargo.id_for_label }}">Cargo</label>

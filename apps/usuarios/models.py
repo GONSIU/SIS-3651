@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -10,6 +10,19 @@ from apps.core.validators import (
     validar_nombre_persona,
     validar_telefono,
 )
+
+
+class UsuarioManager(UserManager):
+    """Manager de Usuario: el superusuario creado por consola es siempre rol admin.
+
+    Asi el primer administrador del sistema se crea con createsuperuser y el resto
+    desde la gestion de usuarios propia, sin depender de /admin."""
+
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault("rol", "admin")
+        if extra_fields["rol"] != "admin":
+            raise ValueError("El superusuario debe tener rol='admin'.")
+        return super().create_superuser(username, email, password, **extra_fields)
 
 
 class Usuario(AbstractUser):
@@ -39,6 +52,8 @@ class Usuario(AbstractUser):
         related_name="empleados_asignados",
     )
 
+    objects = UsuarioManager()
+
     def __str__(self):
         return self.get_full_name() or self.username
 
@@ -49,6 +64,15 @@ class Usuario(AbstractUser):
         # Vacio pasa a NULL: unique permite varios NULL, pero no varios "".
         self.ci = normalizar_ci(self.ci) or None
         super().clean_fields(exclude=exclude)
+
+    def es_ultimo_admin_activo(self) -> bool:
+        """True si es admin activo y no queda ningun otro admin activo.
+
+        Usa los valores actuales de la instancia: llamarlo antes de aplicarle cambios."""
+        if self.rol != "admin" or not self.is_active:
+            return False
+        otros = Usuario.objects.filter(rol="admin", is_active=True).exclude(pk=self.pk)
+        return not otros.exists()
 
     def clean(self):
         super().clean()

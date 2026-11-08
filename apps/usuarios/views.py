@@ -1,12 +1,15 @@
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView, UpdateView
+from django.shortcuts import get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.utils.functional import cached_property
+from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from apps.core.mixins import RolRequeridoMixin
-from .forms import RegistroClienteForm, UsuarioEditForm, UsuarioForm
+from .forms import RegistroClienteForm, RestablecerPasswordForm, UsuarioEditForm, UsuarioForm
 from .models import Usuario
 
 
@@ -114,3 +117,44 @@ class EditarUsuarioView(RolRequeridoMixin, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, f"Usuario {self.object.username} actualizado.")
         return response
+
+
+class RestablecerPasswordView(RolRequeridoMixin, FormView):
+    """El admin asigna una contrasena temporal nueva a un usuario que la olvido.
+
+    Al cambiar el hash, Django invalida las sesiones abiertas de ese usuario: cada
+    sesion guarda un valor derivado del hash y deja de coincidir."""
+
+    roles_permitidos = ["admin"]
+    form_class = RestablecerPasswordForm
+    template_name = "usuarios/restablecer_password.html"
+
+    @cached_property
+    def usuario(self) -> Usuario:
+        # Se busca recien al usarlo, despues del chequeo de rol del mixin: asi quien no
+        # es admin recibe 403 y no puede averiguar que pk existen (404).
+        return get_object_or_404(Usuario, pk=self.kwargs["pk"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.usuario
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["usuario"] = self.usuario
+        return context
+
+    def get_success_url(self):
+        return reverse("usuarios:editar", kwargs={"pk": self.usuario.pk})
+
+    def form_valid(self, form):
+        form.save()
+        if self.usuario.pk == self.request.user.pk:
+            # Sin esto, el admin que cambia su propia contrasena perderia su sesion.
+            update_session_auth_hash(self.request, self.usuario)
+        messages.success(
+            self.request,
+            f"Contrasena de {self.usuario.username} restablecida. Sus sesiones abiertas se cerraron.",
+        )
+        return super().form_valid(form)

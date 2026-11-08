@@ -21,6 +21,11 @@
 <div><dt class="font-label text-label-sm text-on-surface-variant">FECHA DE ALTA</dt><dd class="mt-0.5">{{ usuario.date_joined|date:"d/m/Y" }}</dd></div>
 <div><dt class="font-label text-label-sm text-on-surface-variant">ULTIMO INGRESO</dt><dd class="mt-0.5">{% if usuario.last_login %}{{ usuario.last_login|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</dd></div>
 </dl>
+<div class="border-t border-surface-container-highest mt-5 pt-4">
+<a class="inline-flex items-center gap-2 border border-deep-navy text-deep-navy font-label text-label-md px-4 py-2 rounded hover:bg-surface-container-high transition-colors" href="{% url 'usuarios:restablecer_password' usuario.pk %}">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>Restablecer contrasena
+</a>
+</div>
 </div>
 
 {% if form.non_field_errors %}

@@ -1,11 +1,14 @@
 from django.contrib import messages
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
+
+from apps.core.mixins import RolRequeridoMixin
 from .models import Viaje
 from .forms import ViajeForm
 
 
-class ListaViajesView(ListView):
+class ListaViajesView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Viaje
     template_name = "viajes/listado.html"
     context_object_name = "viajes"
@@ -25,7 +28,8 @@ class ListaViajesView(ListView):
         return context
 
 
-class NuevoViajeView(CreateView):
+class NuevoViajeView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Viaje
     form_class = ViajeForm
     template_name = "viajes/nuevo.html"

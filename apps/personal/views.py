@@ -7,12 +7,14 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, ListView, TemplateView
 
+from apps.core.mixins import RolRequeridoMixin
 from apps.ventas.models import Pasaje
-from .forms import EmpleadoForm
+from .forms import EmpleadoForm, usuarios_sin_ficha
 from .models import Empleado
 
 
-class ListaEmpleadosView(ListView):
+class ListaEmpleadosView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Empleado
     template_name = "personal/listado.html"
     context_object_name = "empleados"
@@ -20,12 +22,32 @@ class ListaEmpleadosView(ListView):
     def get_queryset(self):
         return Empleado.objects.select_related("usuario__terminal_asignado")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["sin_ficha"] = usuarios_sin_ficha().count()
+        return context
 
-class NuevoEmpleadoView(CreateView):
+
+class NuevoEmpleadoView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Empleado
     form_class = EmpleadoForm
     template_name = "personal/nuevo.html"
     success_url = reverse_lazy("personal:listado")
+
+    def get_initial(self):
+        # ?usuario=<pk> preselecciona al usuario (por ejemplo, recien creado en Usuarios).
+        # No hace falta validarlo aqui: el queryset del campo descarta un pk ajeno.
+        initial = super().get_initial()
+        usuario = self.request.GET.get("usuario", "")
+        if usuario.isdigit():
+            initial["usuario"] = int(usuario)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["hay_candidatos"] = usuarios_sin_ficha().exists()
+        return context
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -33,9 +55,10 @@ class NuevoEmpleadoView(CreateView):
         return response
 
 
-class DesempenoVentanillaView(TemplateView):
+class DesempenoVentanillaView(RolRequeridoMixin, TemplateView):
     """Ventas por vendedor en un dia, calculadas en vivo desde Pasaje (sin tabla propia)."""
 
+    roles_permitidos = ["supervisor", "admin"]
     template_name = "personal/desempeno.html"
 
     def _fecha(self) -> tuple[date, bool]:

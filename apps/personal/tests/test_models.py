@@ -32,6 +32,10 @@ class EmpleadoTests(TestCase):
 
 class DesempenoVentanillaViewTests(VentasTestCase):
     def setUp(self):
+        # La vista exige rol supervisor o admin (RolRequeridoMixin).
+        self.client.force_login(Usuario.objects.create_user(
+            username="sup", rol="supervisor", terminal_asignado=self.ruta.origen
+        ))
         self.con_ficha = Usuario.objects.create_user(username="karen", first_name="Karen", last_name="Vargas")
         Empleado.objects.create(usuario=self.con_ficha, cargo="Ventanillera", fecha_ingreso=self.hoy)
         self.sin_ficha = Usuario.objects.create_user(username="marco")

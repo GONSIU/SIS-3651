@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView
 
+from apps.core.mixins import RolRequeridoMixin
 from apps.viajes.models import Viaje, AsientoViaje
 from .forms import VentaForm
 from .models import Pasaje, Pago, Comprobante
@@ -26,7 +27,8 @@ EMPRESA_FISCAL = {
 }
 
 
-class NuevaVentaView(View):
+class NuevaVentaView(RolRequeridoMixin, View):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     template_name = "ventas/nueva_venta.html"
 
     def _viajes_disponibles(self):
@@ -137,7 +139,8 @@ class NuevaVentaView(View):
         return render(request, self.template_name, self._contexto(request, form=form, viaje_seleccionado=viaje))
 
 
-class VerBoletoView(DetailView):
+class VerBoletoView(RolRequeridoMixin, DetailView):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     model = Pasaje
     template_name = "ventas/boleto.html"
     context_object_name = "pasaje"

@@ -8,6 +8,9 @@ from .base import VentasTestCase
 
 
 class NuevaVentaViewTests(VentasTestCase):
+    def setUp(self):
+        self.client.force_login(self.vendedor)
+
     def vender(self, **kwargs):
         datos = {
             "viaje_id": self.viaje.pk,

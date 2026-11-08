@@ -3,11 +3,14 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, CreateView
 from django.urls import reverse, reverse_lazy
+
+from apps.core.mixins import RolRequeridoMixin
 from .models import Terminal, Ruta, Horario
 from .forms import TerminalForm, RutaForm, HorarioForm
 
 
-class ListaRutasView(ListView):
+class ListaRutasView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Ruta
     template_name = "rutas/listado.html"
     context_object_name = "rutas"
@@ -26,7 +29,8 @@ class ListaRutasView(ListView):
         return context
 
 
-class NuevaRutaView(CreateView):
+class NuevaRutaView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Ruta
     form_class = RutaForm
     template_name = "rutas/nuevo.html"
@@ -38,7 +42,8 @@ class NuevaRutaView(CreateView):
         return response
 
 
-class NuevaTerminalView(CreateView):
+class NuevaTerminalView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Terminal
     form_class = TerminalForm
     template_name = "rutas/terminal_nuevo.html"
@@ -51,7 +56,8 @@ class NuevaTerminalView(CreateView):
         return response
 
 
-class ListaHorariosView(ListView):
+class ListaHorariosView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Horario
     template_name = "rutas/horarios_listado.html"
     context_object_name = "horarios"
@@ -68,7 +74,8 @@ class ListaHorariosView(ListView):
         return context
 
 
-class NuevoHorarioView(CreateView):
+class NuevoHorarioView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Horario
     form_class = HorarioForm
     template_name = "rutas/horario_nuevo.html"

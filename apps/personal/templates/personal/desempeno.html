@@ -1,0 +1,70 @@
+{% extends "base_dashboard.html" %}
+{% load core_extras %}
+
+{% block title %}Desempeño de Ventanilla &mdash; Trans Naser{% endblock %}
+{% block nav_personal %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'personal:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Desempeño de Ventanilla</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Ventas por vendedor el {{ fecha|date:"d M Y" }}, calculadas a partir de los pasajes.</p>
+</div>
+</div>
+<form method="get" class="flex items-center gap-2 self-start">
+<input class="form-input-custom border border-outline-variant rounded px-3 py-2 font-body-sm text-body-sm" type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}" aria-label="Fecha"/>
+<button class="border border-outline-variant rounded px-3 py-2 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy" type="submit"><span class="material-symbols-outlined text-[16px]">search</span>Ver</button>
+</form>
+</div>
+
+{% if not fecha_valida %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">La fecha indicada no es valida; se muestra el dia de hoy.</div>
+{% endif %}
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<span class="font-label text-label-sm text-on-surface-variant">VENDEDORES CON VENTAS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ filas|length }}</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
+<span class="font-label text-label-sm text-on-surface-variant">PASAJES VENDIDOS</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ total_ventas }}</p>
+</div>
+<div class="rounded-lg p-4 border-l-4 border-signal-orange" style="background:#fff4ec">
+<span class="font-label text-label-sm text-on-surface-variant">MONTO TOTAL</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ total_monto|moneda }}</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Vendedor</th><th class="px-5 py-3">Cargo</th><th class="px-5 py-3">Terminal</th><th class="px-5 py-3">Ventas</th><th class="px-5 py-3">Monto vendido</th><th class="px-5 py-3">Reclamos</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for fila in filas %}
+<tr>
+<td class="px-5 py-3">
+<p class="font-label text-label-md text-deep-navy">{{ fila.nombre }}</p>
+{% if fila.nombre != fila.username %}<p class="font-label text-label-sm text-on-surface-variant">{{ fila.username }}</p>{% endif %}
+</td>
+<td class="px-5 py-3 font-label">{% if fila.cargo %}{{ fila.cargo }}{% else %}<span class="text-on-surface-variant">Sin ficha de empleado</span>{% endif %}</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">{{ fila.terminal|default:"&mdash;" }}</td>
+<td class="px-5 py-3 font-label">{{ fila.ventas_realizadas }}</td>
+<td class="px-5 py-3 font-label">{{ fila.monto_total_vendido|moneda }}</td>
+{# Reclamos: pendiente hasta que exista el modulo de reclamos. #}
+<td class="px-5 py-3 font-label text-on-surface-variant">&mdash;</td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">No hay ventas registradas ese dia.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

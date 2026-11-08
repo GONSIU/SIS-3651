@@ -5,6 +5,7 @@ from django.views.generic import TemplateView
 from apps.rutas.models import Ruta
 from apps.viajes.models import Viaje
 from apps.ventas.models import Pasaje
+from apps.encomiendas.models import Encomienda
 
 def root_redirect(request):
     return redirect("usuarios:login")  # usa el namespace de la app
@@ -36,6 +37,12 @@ class IndexView(TemplateView):
             .order_by("-created_at")[:5]
         )
 
+        encomiendas_total = Encomienda.objects.count()
+        encomiendas_despachadas = Encomienda.objects.filter(estado="entregado").count()
+        encomiendas_despachadas_pct = (
+            int(encomiendas_despachadas / encomiendas_total * 100) if encomiendas_total else 0
+        )
+
         context.update(
             {
                 "boletos_hoy": pasajes_hoy.count(),
@@ -44,6 +51,8 @@ class IndexView(TemplateView):
                 "rutas_activas_pct": int(rutas_activas / rutas_totales * 100) if rutas_totales else 0,
                 "proximas_salidas": proximas_salidas,
                 "ventas_recientes": ventas_recientes,
+                "encomiendas_total": encomiendas_total,
+                "encomiendas_despachadas_pct": encomiendas_despachadas_pct,
             }
         )
         return context

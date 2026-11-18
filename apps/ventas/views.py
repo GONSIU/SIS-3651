@@ -3,10 +3,8 @@ from datetime import date
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView
@@ -14,8 +12,14 @@ from django.views.generic import DetailView
 from apps.core.mixins import RolRequeridoMixin
 from apps.viajes.models import Viaje, AsientoViaje
 from .forms import VentaForm
-from .models import Pasaje, Pago, Comprobante
-from .services import buscar_pasajero_por_ci, cliente_por_ci
+from .models import Pasaje
+from .services import (
+    DatosPago,
+    DatosPasajero,
+    buscar_pasajero_por_ci,
+    liberar_reservas_vencidas,
+    registrar_venta,
+)
 
 # Datos del emisor: fijos para toda la empresa (no hay multi-sucursal en el
 # alcance del proyecto). Son datos ficticios para fines académicos: Trans
@@ -143,6 +147,8 @@ class NuevaVentaView(RolRequeridoMixin, View):
         return iniciales
 
     def get(self, request):
+        # Antes de contar asientos libres, para que una reserva vencida no figure ocupada.
+        liberar_reservas_vencidas()
         return render(request, self.template_name, self._contexto(request))
 
     def post(self, request):
@@ -151,50 +157,32 @@ class NuevaVentaView(RolRequeridoMixin, View):
         form = VentaForm(request.POST)
 
         if form.is_valid():
-            with transaction.atomic():
-                asiento_viaje = get_object_or_404(
-                    AsientoViaje.objects.select_for_update(),
-                    pk=form.cleaned_data["asiento_viaje_id"],
+            datos = form.cleaned_data
+            # Un asiento de otro viaje es una peticion manipulada: 404, como antes.
+            get_object_or_404(AsientoViaje, pk=datos["asiento_viaje_id"], viaje=viaje)
+            try:
+                pasaje = registrar_venta(
                     viaje=viaje,
+                    asiento_viaje_id=datos["asiento_viaje_id"],
+                    pasajero=DatosPasajero(
+                        nombre=datos["cliente_nombre"], ci=datos["cliente_ci"], telefono=datos["telefono"]
+                    ),
+                    precio=datos["precio"],
+                    pago=DatosPago(
+                        metodo=datos["metodo_pago"], monto=datos["precio"], referencia=datos["referencia_externa"]
+                    ),
+                    vendido_por=request.user,
                 )
-                if asiento_viaje.estado != "disponible":
-                    form.add_error(None, "Ese asiento ya no está disponible. Elige otro.")
-                else:
-                    pasaje = Pasaje(
-                        viaje=viaje,
-                        asiento_viaje=asiento_viaje,
-                        # Si el CI es de una cuenta activa, el pasaje queda en su historial.
-                        cliente=cliente_por_ci(form.cleaned_data["cliente_ci"]),
-                        cliente_nombre=form.cleaned_data["cliente_nombre"],
-                        cliente_ci=form.cleaned_data["cliente_ci"],
-                        cliente_telefono=form.cleaned_data["telefono"],
-                        vendido_por=request.user if request.user.is_authenticated else None,
-                        actualizado_por=request.user if request.user.is_authenticated else None,
-                        canal="ventanilla",
-                        precio=form.cleaned_data["precio"],
-                    )
-                    try:
-                        pasaje.full_clean()
-                    except ValidationError as error:
-                        for mensaje in error.messages:
-                            form.add_error(None, mensaje)
-                    else:
-                        pasaje.save()
-                        pasaje.marcar_como_vendido()
-                        Pago.objects.create(
-                            pasaje=pasaje,
-                            metodo=form.cleaned_data["metodo_pago"],
-                            monto=form.cleaned_data["precio"],
-                            referencia_externa=form.cleaned_data["referencia_externa"],
-                        )
-                        Comprobante.objects.create(pasaje=pasaje, tipo="recibo")
-
-                        messages.success(
-                            request,
-                            f"Pasaje {pasaje.codigo_pasaje} vendido correctamente "
-                            f"(asiento {asiento_viaje.asiento.numero}).",
-                        )
-                        return redirect("ventas:boleto", pk=pasaje.pk)
+            except ValidationError as error:
+                for mensaje in error.messages:
+                    form.add_error(None, mensaje)
+            else:
+                messages.success(
+                    request,
+                    f"Pasaje {pasaje.codigo_pasaje} vendido correctamente "
+                    f"(asiento {pasaje.asiento_viaje.asiento.numero}).",
+                )
+                return redirect("ventas:boleto", pk=pasaje.pk)
 
         return render(request, self.template_name, self._contexto(request, form=form, viaje_seleccionado=viaje))
 

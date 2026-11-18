@@ -1,0 +1,41 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Eliminar &mdash; Trans Naser{% endblock %}
+{% block nav_rutas %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{{ url_cancelar }}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Eliminar {{ tipo }}</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ object }}</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-6 max-w-2xl space-y-4">
+{% if bloqueado %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">
+No se puede eliminar {{ tipo }}: tiene viajes registrados, que quedarian sin ruta ni horario junto con sus pasajes.
+Desactivar impide programar viajes nuevos y conserva el historial.
+</div>
+<div class="flex items-center gap-3">
+{% if object.activa or object.activo %}
+<form method="post" action="{{ url_activar }}">
+{% csrf_token %}
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Desactivar</button>
+</form>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ya no admite viajes nuevos.</p>
+{% endif %}
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{{ url_cancelar }}">Volver</a>
+</div>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface">Esta accion no se puede deshacer. {{ detalle }}</p>
+<form method="post" class="flex items-center gap-3">
+{% csrf_token %}
+<button class="bg-red-700 hover:bg-red-800 text-white font-label text-label-md px-6 py-2.5 rounded shadow-sm transition-colors" type="submit">Eliminar definitivamente</button>
+<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-4 py-2.5" href="{{ url_cancelar }}">Cancelar</a>
+</form>
+{% endif %}
+</div>
+{% endblock %}

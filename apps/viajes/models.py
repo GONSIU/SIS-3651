@@ -96,6 +96,13 @@ class Viaje(models.Model):
         if self._state.adding and self.fecha_salida and self.fecha_salida < timezone.localdate():
             errores.setdefault("fecha_salida", []).append("La fecha de salida no puede ser pasada.")
 
+        # Solo al crear: desactivar una ruta u horario no invalida los viajes que ya tenia.
+        if self._state.adding:
+            if self.ruta_id and not self.ruta.activa:
+                errores.setdefault("ruta", []).append("La ruta esta inactiva.")
+            if self.horario_id and not self.horario.activo:
+                errores.setdefault("horario", []).append("El horario esta inactivo.")
+
         if self.horario_id:
             if self.ruta_id and self.horario.ruta_id != self.ruta_id:
                 errores.setdefault("horario", []).append("El horario no pertenece a la ruta elegida.")

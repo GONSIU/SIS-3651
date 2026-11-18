@@ -1,7 +1,9 @@
+from datetime import time
+
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.rutas.models import Ruta, Terminal
+from apps.rutas.models import Horario, Ruta, Terminal
 from apps.usuarios.models import Usuario
 
 ROLES = ("cliente", "ventanillero", "supervisor", "admin", "conductor")
@@ -37,6 +39,7 @@ class RutasPermisosTests(ComprobarPermisosMixin, TestCase):
         origen = Terminal.objects.create(nombre="Bimodal", ciudad="La Paz")
         destino = Terminal.objects.create(nombre="Central", ciudad="Oruro")
         cls.ruta = Ruta.objects.create(origen=origen, destino=destino)
+        cls.horario = Horario.objects.create(ruta=cls.ruta, hora_salida=time(8), dias_semana="L,M")
         cls.usuarios = crear_usuarios_por_rol(origen)
 
     def test_permisos(self):
@@ -47,6 +50,10 @@ class RutasPermisosTests(ComprobarPermisosMixin, TestCase):
                 reverse("rutas:terminal_nuevo"),
                 reverse("rutas:horarios", kwargs={"ruta_id": self.ruta.pk}),
                 reverse("rutas:horario_nuevo", kwargs={"ruta_id": self.ruta.pk}),
+                reverse("rutas:editar", args=[self.ruta.pk]),
+                reverse("rutas:eliminar", args=[self.ruta.pk]),
+                reverse("rutas:horario_editar", args=[self.horario.pk]),
+                reverse("rutas:horario_eliminar", args=[self.horario.pk]),
             ],
             {"supervisor", "admin"},
         )

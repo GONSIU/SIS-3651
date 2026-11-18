@@ -1,14 +1,14 @@
 {% extends "base_dashboard.html" %}
 
-{% block title %}Nueva Ruta &mdash; Trans Naser{% endblock %}
+{% block title %}{% if editando %}Editar Ruta{% else %}Nueva Ruta{% endif %} &mdash; Trans Naser{% endblock %}
 {% block nav_rutas %}active{% endblock %}
 
 {% block content %}
 <div class="flex items-center gap-3">
 <a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
 <div>
-<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nueva Ruta</h1>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Registra una ruta entre dos terminales. Los horarios se agregan despues desde el listado.</p>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">{% if editando %}Editar Ruta{% else %}Nueva Ruta{% endif %}</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{% if editando %}{{ object }}{% else %}Registra una ruta entre dos terminales. Los horarios se agregan despues desde el listado.{% endif %}</p>
 </div>
 </div>
 
@@ -23,11 +23,13 @@
 <div>
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.origen.id_for_label }}">Terminal de origen</label>
 {{ form.origen }}
+{% if form.origen.help_text %}<p class="text-body-sm text-on-surface-variant mt-1">{{ form.origen.help_text }}</p>{% endif %}
 {% if form.origen.errors %}<p class="text-body-sm text-error mt-1">{{ form.origen.errors.0 }}</p>{% endif %}
 </div>
 <div>
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.destino.id_for_label }}">Terminal de destino</label>
 {{ form.destino }}
+{% if form.destino.help_text %}<p class="text-body-sm text-on-surface-variant mt-1">{{ form.destino.help_text }}</p>{% endif %}
 {% if form.destino.errors %}<p class="text-body-sm text-error mt-1">{{ form.destino.errors.0 }}</p>{% endif %}
 </div>
 <div class="sm:col-span-2 -mt-2">
@@ -42,6 +44,11 @@
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.duracion_minutos.id_for_label }}">Duracion estimada (minutos)</label>
 {{ form.duracion_minutos }}
 {% if form.duracion_minutos.errors %}<p class="text-body-sm text-error mt-1">{{ form.duracion_minutos.errors.0 }}</p>{% endif %}
+</div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.precio_base.id_for_label }}">Precio base del pasaje (Bs)</label>
+{{ form.precio_base }}
+{% if form.precio_base.errors %}<p class="text-body-sm text-error mt-1">{{ form.precio_base.errors.0 }}</p>{% endif %}
 </div>
 <div class="sm:col-span-2 flex items-center gap-2">
 {{ form.activa }}

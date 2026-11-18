@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Lower
+from django.utils import timezone
 from apps.core.models import TimeStampedModel
 from apps.core.validators import normalizar_espacios, validar_solo_letras
 
@@ -63,6 +64,16 @@ class Ruta(TimeStampedModel):
     duracion_minutos = models.PositiveIntegerField(
         null=True, blank=True, validators=[MinValueValidator(1)]
     )
+    # Precio sugerido del pasaje. Opcional para no romper las rutas existentes; la venta
+    # online lo necesitara porque el cliente no escribe el precio.
+    precio_base = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    # Inactiva: no se programan viajes nuevos. Los ya programados siguen igual.
     activa = models.BooleanField(default=True)
 
     class Meta:
@@ -79,6 +90,11 @@ class Ruta(TimeStampedModel):
                 violation_error_message="La duracion debe ser de al menos 1 minuto.",
             ),
             models.CheckConstraint(
+                check=Q(precio_base__isnull=True) | Q(precio_base__gt=0),
+                name="ruta_precio_base_positivo",
+                violation_error_message="El precio base debe ser mayor a 0.",
+            ),
+            models.CheckConstraint(
                 check=~Q(origen=F("destino")),
                 name="ruta_origen_distinto_destino",
                 violation_error_message="El destino debe ser distinto del origen.",
@@ -93,6 +109,10 @@ class Ruta(TimeStampedModel):
     def __str__(self):
         return f"{self.origen} → {self.destino}"
 
+    def tiene_viajes(self) -> bool:
+        """Con viajes la ruta no se borra (Viaje.ruta es PROTECT) ni cambia de terminales."""
+        return self.pk is not None and self.viajes.exists()
+
 
 class Horario(TimeStampedModel):
     ruta = models.ForeignKey(Ruta, related_name="horarios", on_delete=models.CASCADE)
@@ -100,6 +120,9 @@ class Horario(TimeStampedModel):
     dias_semana = models.CharField(
         max_length=13, validators=[validar_dias_semana], help_text="Ej. L,M,X,J,V,S,D"
     )
+    # Inactivo: no se programan viajes nuevos con este horario. Es la forma de retirar un
+    # horario que ya tiene viajes y por eso no se puede borrar.
+    activo = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["ruta", "hora_salida"]
@@ -111,6 +134,17 @@ class Horario(TimeStampedModel):
 
     def __str__(self):
         return f"{self.ruta} — {self.hora_salida}"
+
+    def tiene_viajes(self) -> bool:
+        """Con viajes no se borra (Viaje.horario es PROTECT) ni cambia de hora o de ruta:
+        la salida programada de cada viaje se calcula con hora_salida."""
+        return self.pk is not None and self.viajes.exists()
+
+    def viajes_futuros_fuera_de(self, dias: list[str]):
+        """Viajes no cancelados desde hoy que caen en un dia que no esta en `dias`."""
+        hoy = timezone.localdate()
+        pendientes = self.viajes.filter(fecha_salida__gte=hoy).exclude(estado="cancelado")
+        return [v for v in pendientes if DIAS_VALIDOS[v.fecha_salida.weekday()] not in dias]
 
     def opera_el(self, fecha) -> bool:
         """Indica si este horario sale el dia de la semana de esa fecha."""

@@ -1,13 +1,13 @@
 {% extends "base_dashboard.html" %}
 
-{% block title %}Nuevo Horario &mdash; Trans Naser{% endblock %}
+{% block title %}{% if editando %}Editar Horario{% else %}Nuevo Horario{% endif %} &mdash; Trans Naser{% endblock %}
 {% block nav_rutas %}active{% endblock %}
 
 {% block content %}
 <div class="flex items-center gap-3">
 <a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'rutas:horarios' ruta.pk %}"><span class="material-symbols-outlined">arrow_back</span></a>
 <div>
-<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Nuevo Horario</h1>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">{% if editando %}Editar Horario{% else %}Nuevo Horario{% endif %}</h1>
 <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Agrega una hora de salida a una ruta. Dias como letras separadas por coma: L,M,X,J,V,S,D.</p>
 </div>
 </div>
@@ -28,6 +28,7 @@
 <div>
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.hora_salida.id_for_label }}">Hora de salida</label>
 {{ form.hora_salida }}
+{% if form.hora_salida.help_text %}<p class="text-body-sm text-on-surface-variant mt-1">{{ form.hora_salida.help_text }}</p>{% endif %}
 {% if form.hora_salida.errors %}<p class="text-body-sm text-error mt-1">{{ form.hora_salida.errors.0 }}</p>{% endif %}
 </div>
 <div>

@@ -22,7 +22,7 @@
 <table class="w-full text-left">
 <thead>
 <tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
-<th class="px-5 py-3">Hora de salida</th><th class="px-5 py-3">Dias</th>
+<th class="px-5 py-3">Hora de salida</th><th class="px-5 py-3">Dias</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
@@ -30,9 +30,23 @@
 <tr>
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ horario.hora_salida|time:"H:i" }}</td>
 <td class="px-5 py-3 font-label">{{ horario.dias_semana }}</td>
+<td class="px-5 py-3">
+{% if horario.activo %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ACTIVO</span>
+{% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">INACTIVO</span>{% endif %}
+</td>
+<td class="px-5 py-3">
+<div class="flex items-center justify-end gap-3">
+<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" href="{% url 'rutas:horario_editar' horario.pk %}"><span class="material-symbols-outlined text-[18px]">edit</span>Editar</a>
+<form method="post" action="{% url 'rutas:horario_activar' horario.pk %}">
+{% csrf_token %}
+<button class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" type="submit"><span class="material-symbols-outlined text-[18px]">{% if horario.activo %}toggle_off{% else %}toggle_on{% endif %}</span>{% if horario.activo %}Desactivar{% else %}Activar{% endif %}</button>
+</form>
+<a class="font-label text-label-sm text-red-700 hover:text-red-900 inline-flex items-center gap-1" href="{% url 'rutas:horario_eliminar' horario.pk %}"><span class="material-symbols-outlined text-[18px]">delete</span>Eliminar</a>
+</div>
+</td>
 </tr>
 {% empty %}
-<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="2">Esta ruta todavia no tiene horarios.</td></tr>
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="4">Esta ruta todavia no tiene horarios.</td></tr>
 {% endfor %}
 </tbody>
 </table>

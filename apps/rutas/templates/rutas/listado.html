@@ -1,4 +1,5 @@
 {% extends "base_dashboard.html" %}
+{% load core_extras %}
 
 {% block title %}Rutas &mdash; Trans Naser{% endblock %}
 {% block nav_rutas %}active{% endblock %}
@@ -34,7 +35,7 @@
 <table class="w-full text-left">
 <thead>
 <tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
-<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Distancia</th><th class="px-5 py-3">Duracion</th><th class="px-5 py-3">Horarios</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Distancia</th><th class="px-5 py-3">Duracion</th><th class="px-5 py-3">Precio base</th><th class="px-5 py-3">Horarios</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
@@ -43,17 +44,26 @@
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ ruta.origen }} &rarr; {{ ruta.destino }}</td>
 <td class="px-5 py-3 font-label">{% if ruta.distancia_km %}{{ ruta.distancia_km }} km{% else %}&mdash;{% endif %}</td>
 <td class="px-5 py-3 font-label">{% if ruta.duracion_minutos %}{{ ruta.duracion_minutos }} min{% else %}&mdash;{% endif %}</td>
+<td class="px-5 py-3 font-label">{% if ruta.precio_base %}{{ ruta.precio_base|moneda }}{% else %}&mdash;{% endif %}</td>
 <td class="px-5 py-3 font-label"><a class="text-deep-navy hover:text-signal-orange underline" href="{% url 'rutas:horarios' ruta.pk %}">{{ ruta.num_horarios }}</a></td>
 <td class="px-5 py-3">
 {% if ruta.activa %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ACTIVA</span>
 {% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">INACTIVA</span>{% endif %}
 </td>
-<td class="px-5 py-3 text-right">
+<td class="px-5 py-3">
+<div class="flex items-center justify-end gap-3">
 <a class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" href="{% url 'rutas:horario_nuevo' ruta.pk %}"><span class="material-symbols-outlined text-[18px]">add</span>Horario</a>
+<a class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" href="{% url 'rutas:editar' ruta.pk %}"><span class="material-symbols-outlined text-[18px]">edit</span>Editar</a>
+<form method="post" action="{% url 'rutas:activar' ruta.pk %}">
+{% csrf_token %}
+<button class="font-label text-label-sm text-deep-navy hover:text-signal-orange inline-flex items-center gap-1" type="submit"><span class="material-symbols-outlined text-[18px]">{% if ruta.activa %}toggle_off{% else %}toggle_on{% endif %}</span>{% if ruta.activa %}Desactivar{% else %}Activar{% endif %}</button>
+</form>
+<a class="font-label text-label-sm text-red-700 hover:text-red-900 inline-flex items-center gap-1" href="{% url 'rutas:eliminar' ruta.pk %}"><span class="material-symbols-outlined text-[18px]">delete</span>Eliminar</a>
+</div>
 </td>
 </tr>
 {% empty %}
-<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">Todavia no hay rutas registradas.</td></tr>
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="7">Todavia no hay rutas registradas.</td></tr>
 {% endfor %}
 </tbody>
 </table>

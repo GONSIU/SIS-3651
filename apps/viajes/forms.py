@@ -38,7 +38,7 @@ class ViajeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["ruta"].queryset = Ruta.objects.filter(activa=True).select_related("origen", "destino")
         self.fields["bus"].queryset = Bus.objects.filter(estado="activo")
-        self.fields["horario"].queryset = Horario.objects.select_related("ruta")
+        self.fields["horario"].queryset = Horario.objects.filter(activo=True, ruta__activa=True).select_related("ruta")
         self.fields["conductor"].queryset = conductores_disponibles()
         self.fields["conductor"].empty_label = "Sin conductor asignado"
 

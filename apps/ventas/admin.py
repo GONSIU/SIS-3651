@@ -17,7 +17,7 @@ class ComprobanteInline(admin.StackedInline):
 class PasajeAdmin(admin.ModelAdmin):
     list_display = ("codigo_pasaje", "viaje", "nombre_pasajero", "canal", "precio", "estado")
     list_filter = ("estado", "canal")
-    search_fields = ("codigo_pasaje", "cliente_nombre", "cliente_ci")
+    search_fields = ("codigo_pasaje", "cliente_nombre", "cliente_ci", "cliente_telefono")
     readonly_fields = ("codigo_pasaje",)
     inlines = [PagoInline, ComprobanteInline]
 

@@ -97,7 +97,7 @@
 <table class="w-full text-sm border-collapse">
 <thead>
 <tr class="bg-gray-100 text-left">
-<th class="px-3 py-2 border">Asiento</th><th class="px-3 py-2 border">Pasajero</th><th class="px-3 py-2 border">CI</th><th class="px-3 py-2 border">Pasaje</th><th class="px-3 py-2 border">Estado</th>
+<th class="px-3 py-2 border">Asiento</th><th class="px-3 py-2 border">Pasajero</th><th class="px-3 py-2 border">CI</th><th class="px-3 py-2 border">Telefono</th><th class="px-3 py-2 border">Pasaje</th><th class="px-3 py-2 border">Estado</th>
 </tr>
 </thead>
 <tbody>
@@ -106,11 +106,12 @@
 <td class="px-3 py-2 border mono">{{ pasaje.asiento_viaje.asiento.numero }}</td>
 <td class="px-3 py-2 border">{{ pasaje.nombre_pasajero }}</td>
 <td class="px-3 py-2 border mono">{% firstof pasaje.cliente_ci pasaje.cliente.ci "—" %}</td>
+<td class="px-3 py-2 border mono">{% firstof pasaje.cliente_telefono pasaje.cliente.telefono "—" %}</td>
 <td class="px-3 py-2 border mono">{{ pasaje.codigo_pasaje }}</td>
 <td class="px-3 py-2 border">{% if pasaje.estado == "reservado" %}<strong>Por pagar</strong>{% else %}{{ pasaje.get_estado_display }}{% endif %}</td>
 </tr>
 {% empty %}
-<tr><td class="px-3 py-3 border text-center text-gray-500" colspan="5">Sin pasajeros registrados.</td></tr>
+<tr><td class="px-3 py-3 border text-center text-gray-500" colspan="6">Sin pasajeros registrados.</td></tr>
 {% endfor %}
 </tbody>
 </table>

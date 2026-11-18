@@ -12,8 +12,10 @@ from apps.core.utils import generar_codigo
 from apps.core.validators import (
     normalizar_ci,
     normalizar_espacios,
+    normalizar_telefono,
     validar_ci,
     validar_nombre_persona,
+    validar_telefono,
 )
 
 
@@ -43,6 +45,8 @@ class Pasaje(models.Model):
     )
     cliente_nombre = models.CharField(max_length=100, blank=True, validators=[validar_nombre_persona])
     cliente_ci = models.CharField(max_length=12, blank=True, validators=[validar_ci])
+    # Para avisar al pasajero sin cuenta (retrasos, cancelaciones). Opcional.
+    cliente_telefono = models.CharField(max_length=15, blank=True, validators=[validar_telefono])
     vendido_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -91,6 +95,7 @@ class Pasaje(models.Model):
     def clean_fields(self, exclude=None):
         self.cliente_nombre = normalizar_espacios(self.cliente_nombre)
         self.cliente_ci = normalizar_ci(self.cliente_ci)
+        self.cliente_telefono = normalizar_telefono(self.cliente_telefono)
         super().clean_fields(exclude=exclude)
 
     def clean(self):

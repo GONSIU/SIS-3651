@@ -12,7 +12,16 @@
 <div class="card-panel rounded-lg overflow-hidden">
 <div class="flex items-center justify-between px-5 py-4 border-b border-surface-container-highest">
 <h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2"><span class="material-symbols-outlined text-signal-orange">alt_route</span>Viajes Disponibles</h3>
+<form method="get" class="flex items-center gap-2">
+<label class="sr-only" for="filtro-fecha">Fecha de salida</label>
+<input class="form-input-custom border border-outline-variant rounded px-3 py-2 font-body-sm text-body-sm" id="filtro-fecha" name="fecha" type="date" value="{{ fecha|date:'Y-m-d' }}"/>
+<button class="bg-deep-navy hover:bg-secondary text-white font-label text-label-md px-4 py-2 rounded" type="submit">Filtrar</button>
+{% if fecha %}<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-2" href="{% url 'ventas:nueva_venta' %}">Ver todas</a>{% endif %}
+</form>
 </div>
+{% if fecha_invalida %}
+<div class="bg-error-container text-on-error-container text-body-sm px-5 py-3">La fecha no es valida: se muestran todos los viajes.</div>
+{% endif %}
 <div class="overflow-x-auto">
 <table class="w-full text-left">
 <thead>
@@ -22,18 +31,18 @@
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
 {% for viaje in viajes %}
-<tr class="hover:bg-surface-container-low cursor-pointer {% if viaje == viaje_seleccionado %}bg-surface-container-low{% endif %}" onclick="window.location='?viaje={{ viaje.id }}'">
+<tr class="hover:bg-surface-container-low cursor-pointer {% if viaje == viaje_seleccionado %}bg-surface-container-low{% endif %}" onclick="window.location='?viaje={{ viaje.id }}{% if fecha %}&fecha={{ fecha|date:'Y-m-d' }}{% endif %}'">
 <td class="px-5 py-3"><input {% if viaje == viaje_seleccionado %}checked{% endif %} class="pointer-events-none" name="route" type="radio"/></td>
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ viaje.ruta.origen.ciudad }}</td>
 <td class="px-5 py-3">{{ viaje.ruta.destino.ciudad }}</td>
 <td class="px-5 py-3 font-label">{{ viaje.fecha_salida }}</td>
 <td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida }}</td>
 <td class="px-5 py-3">{{ viaje.bus.placa }} ({{ viaje.bus.nombre_tipo }})</td>
-<td class="px-5 py-3 font-label">{{ viaje.asientos_viaje.count }} de {{ viaje.bus.capacidad_pasajeros }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.num_libres }} de {{ viaje.num_asientos }}</td>
 </tr>
 {% empty %}
 <tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="7">
-No hay viajes programados todavía. <a class="text-deep-navy underline" href="{% url 'viajes:nuevo' %}">Programa uno primero</a>.
+{% if fecha %}No hay viajes disponibles el {{ fecha|date:"d/m/Y" }}. <a class="text-deep-navy underline" href="{% url 'ventas:nueva_venta' %}">Ver todas las fechas</a>.{% else %}No hay viajes programados todavía. <a class="text-deep-navy underline" href="{% url 'viajes:nuevo' %}">Programa uno primero</a>.{% endif %}
 </td></tr>
 {% endfor %}
 </tbody>
@@ -42,9 +51,29 @@ No hay viajes programados todavía. <a class="text-deep-navy underline" href="{%
 </div>
 
 {% if viaje_seleccionado %}
+<div class="card-panel rounded-lg p-4">
+<form method="get" class="flex flex-col sm:flex-row sm:items-end gap-3">
+<input name="viaje" type="hidden" value="{{ viaje_seleccionado.id }}"/>
+{% if fecha %}<input name="fecha" type="hidden" value="{{ fecha|date:'Y-m-d' }}"/>{% endif %}
+<div class="flex-1 space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="ci-buscar">Buscar pasajero por CI</label>
+<input class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm" id="ci-buscar" name="ci_buscar" placeholder="Ej. 1234567" type="text" value="{{ busqueda.ci_buscado|default:'' }}"/>
+</div>
+<button class="bg-deep-navy hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">search</span>Buscar</button>
+</form>
+{% if busqueda.error %}
+<p class="text-body-sm text-error mt-2">{{ busqueda.error }}</p>
+{% elif busqueda.encontrado %}
+<p class="text-body-sm text-green-800 mt-2">{% if busqueda.encontrado.tiene_cuenta %}Cliente con cuenta: el pasaje quedara en su historial.{% else %}Datos tomados de una venta anterior.{% endif %} Revisa y completa el formulario.</p>
+{% elif busqueda %}
+<p class="text-body-sm text-on-surface-variant mt-2">No hay registros con ese CI. Ingresa los datos del pasajero.</p>
+{% endif %}
+</div>
+
 <form method="post">
 {% csrf_token %}
 <input name="viaje_id" type="hidden" value="{{ viaje_seleccionado.id }}"/>
+{% if fecha %}<input name="fecha" type="hidden" value="{{ fecha|date:'Y-m-d' }}"/>{% endif %}
 
 {% if form.non_field_errors %}
 <div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 mb-4">

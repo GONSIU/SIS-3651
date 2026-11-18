@@ -1,0 +1,84 @@
+{% extends "base_publico.html" %}
+{% load core_extras %}
+
+{% block title %}Asientos {{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }} — Trans Naser{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'ventas:buscar_viajes' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">{{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }}</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ viaje.fecha_salida|date:"d/m/Y" }} · salida {{ viaje.horario.hora_salida|time:"H:i" }} · {{ viaje.bus.nombre_tipo }}</p>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 card-panel rounded-lg p-5">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-signal-orange">airline_seat_recline_normal</span>Mapa de asientos</h3>
+<div class="flex items-center gap-4 mb-4 font-label text-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm border border-outline-variant bg-white inline-block"></span>Libre</span>
+<span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-surface-container-highest inline-block"></span>Ocupado</span>
+</div>
+<div id="mapa-asientos" data-url="{{ url_mapa }}" data-intervalo="{{ intervalo_ms }}" aria-live="polite">
+{% include "ventas/publico/_mapa.html" %}
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-5 space-y-4 self-start">
+<dl class="space-y-2 font-body-sm text-body-sm">
+<div class="flex justify-between"><dt class="text-on-surface-variant">Precio</dt><dd class="font-label text-deep-navy">{{ viaje.ruta.precio_base|moneda }}</dd></div>
+{% if viaje.ruta.duracion_minutos %}<div class="flex justify-between"><dt class="text-on-surface-variant">Duración estimada</dt><dd class="font-label text-deep-navy">{{ viaje.ruta.duracion_minutos }} min</dd></div>{% endif %}
+</dl>
+{% if user.is_authenticated %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">La reserva en línea estará disponible pronto. Mientras tanto, compra tu pasaje en ventanilla.</p>
+{% else %}
+<a class="w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2" href="{{ url_login }}"><span class="material-symbols-outlined text-[18px]">login</span>Inicia sesión para reservar</a>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center">¿No tienes cuenta? <a class="text-deep-navy underline" href="{% url 'usuarios:registro' %}">Regístrate</a></p>
+{% endif %}
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Pide el mapa cada cierto tiempo y lo reemplaza. Se pausa con la pestana oculta para no
+// consultar al servidor sin necesidad. Lo que evita la doble venta no es esto, sino el
+// bloqueo al confirmar: el mapa solo informa.
+(function () {
+    const contenedor = document.getElementById("mapa-asientos");
+    const url = contenedor.dataset.url;
+    const intervalo = Number(contenedor.dataset.intervalo);
+    let temporizador = null;
+
+    async function actualizar() {
+        try {
+            const respuesta = await fetch(url, { cache: "no-store" });
+            if (!respuesta.ok) {
+                // 404: el viaje dejo de ser reservable (salio, se cancelo o cerro la reserva).
+                detener();
+                return;
+            }
+            contenedor.innerHTML = await respuesta.text();
+        } catch (error) {
+            // Sin conexion: se reintenta en el siguiente ciclo.
+        }
+    }
+    function iniciar() {
+        if (!temporizador) temporizador = setInterval(actualizar, intervalo);
+    }
+    function detener() {
+        clearInterval(temporizador);
+        temporizador = null;
+    }
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            detener();
+        } else {
+            actualizar();
+            iniciar();
+        }
+    });
+    iniciar();
+})();
+</script>
+{% endblock %}

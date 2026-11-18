@@ -17,6 +17,11 @@ VISTAS_PUBLICAS = frozenset(
         "usuarios:login",
         "usuarios:logout",
         "usuarios:registro",  # registro publico de clientes
+        # Consulta de viajes y asientos antes de iniciar sesion (REQF 9). Solo muestran
+        # datos del viaje y el estado de cada asiento, nunca datos de pasajeros.
+        "ventas:buscar_viajes",
+        "ventas:viaje_publico",
+        "ventas:mapa_publico",
     }
 )
 

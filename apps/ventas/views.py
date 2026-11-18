@@ -1,9 +1,7 @@
-from collections import defaultdict
 from datetime import date
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -17,7 +15,9 @@ from .services import (
     DatosPago,
     DatosPasajero,
     buscar_pasajero_por_ci,
+    con_conteo_de_asientos,
     liberar_reservas_vencidas,
+    mapa_de_asientos,
     registrar_venta,
 )
 
@@ -54,14 +54,11 @@ class NuevaVentaView(RolRequeridoMixin, View):
             Viaje.objects.filter(fecha_salida__gte=hoy)
             .exclude(estado__in=Viaje.ESTADOS_SIN_VENTA)
             .select_related("ruta__origen", "ruta__destino", "bus", "horario")
-            # Conteos en la misma consulta: antes la plantilla hacia un count() por fila
-            # y mostraba el total de asientos como si fueran los libres.
-            .annotate(
-                num_asientos=Count("asientos_viaje"),
-                num_libres=Count("asientos_viaje", filter=Q(asientos_viaje__estado="disponible")),
-            )
             .order_by("fecha_salida", "horario__hora_salida")
         )
+        # Conteos en la misma consulta: antes la plantilla hacia un count() por fila
+        # y mostraba el total de asientos como si fueran los libres.
+        viajes = con_conteo_de_asientos(viajes)
         if fecha:
             viajes = viajes.filter(fecha_salida=fecha)
         return viajes
@@ -77,25 +74,6 @@ class NuevaVentaView(RolRequeridoMixin, View):
             return {"ci_buscado": ci_texto, "error": error.messages[0]}
         return {"ci_buscado": ci_texto, "encontrado": encontrado}
 
-    def _agrupar_asientos(self, asientos_viaje):
-        """Arma una estructura [(piso, [[col1,col2,col3,col4], ...]), ...] para
-        dibujar el mapa 2+pasillo+2 en la plantilla sin lógica compleja ahí."""
-        pisos = defaultdict(lambda: defaultdict(dict))
-        for av in asientos_viaje:
-            piso = av.asiento.piso or 1
-            fila = av.asiento.fila or 0
-            columna = av.asiento.columna or 0
-            pisos[piso][fila][columna] = av
-
-        resultado = []
-        for piso in sorted(pisos):
-            filas = []
-            for fila in sorted(pisos[piso]):
-                cols = pisos[piso][fila]
-                filas.append([cols.get(1), cols.get(2), cols.get(3), cols.get(4)])
-            resultado.append((piso, filas))
-        return resultado
-
     def _contexto(self, request, form=None, viaje_seleccionado=None):
         fecha, fecha_invalida = self._fecha_filtro(request)
         viajes = self._viajes_disponibles(fecha)
@@ -107,14 +85,7 @@ class NuevaVentaView(RolRequeridoMixin, View):
             if viaje_seleccionado is None:
                 viaje_seleccionado = viajes.first()
 
-        asientos_viaje = []
-        pisos_asientos = []
-        if viaje_seleccionado:
-            asientos_viaje = (
-                viaje_seleccionado.asientos_viaje.select_related("asiento")
-                .order_by("asiento__piso", "asiento__fila", "asiento__columna")
-            )
-            pisos_asientos = self._agrupar_asientos(asientos_viaje)
+        pisos_asientos = mapa_de_asientos(viaje_seleccionado) if viaje_seleccionado else []
 
         busqueda = self._busqueda_por_ci(request)
         if form is None:

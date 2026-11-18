@@ -3,18 +3,25 @@
 La usan la venta en ventanilla y, mas adelante, la reserva online y la confirmacion
 de reservas: todas pasan por registrar_venta() y conservan el mismo bloqueo."""
 
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from apps.core.validators import normalizar_ci, validar_ci
-from apps.viajes.models import AsientoViaje
+from apps.viajes.models import AsientoViaje, Viaje
 from .models import Comprobante, Pago, Pasaje
+
+
+# La reserva online cierra este tiempo antes de la salida: despues solo se vende en
+# ventanilla. Es tambien el plazo para pagar el saldo de una reserva.
+CIERRE_RESERVA_ONLINE = timedelta(hours=1)
 
 
 @dataclass(frozen=True)
@@ -189,3 +196,56 @@ def liberar_reservas_vencidas(viaje=None, ahora: datetime | None = None) -> int:
         AsientoViaje.objects.filter(pasajes__pk__in=ids, estado="reservado").update(estado="disponible")
         Pasaje.objects.filter(pk__in=ids).update(estado="vencido", updated_at=ahora)
     return len(ids)
+
+
+def con_conteo_de_asientos(viajes):
+    """Anota num_asientos y num_libres en la misma consulta (sin un count() por viaje)."""
+    return viajes.annotate(
+        num_asientos=Count("asientos_viaje"),
+        num_libres=Count("asientos_viaje", filter=Q(asientos_viaje__estado="disponible")),
+    )
+
+
+def viajes_reservables_online(ahora: datetime | None = None):
+    """Viajes que se pueden reservar por internet ahora.
+
+    Vendibles (no salieron, no terminaron, no cancelados), con precio_base (el cliente no
+    escribe el precio) y con salida despues de ahora + CIERRE_RESERVA_ONLINE. El limite
+    se compara como fecha y hora por separado para que funcione cerca de medianoche."""
+    limite = timezone.localtime(ahora or timezone.now()) + CIERRE_RESERVA_ONLINE
+    viajes = (
+        Viaje.objects.exclude(estado__in=Viaje.ESTADOS_SIN_VENTA)
+        .filter(ruta__precio_base__isnull=False)
+        .filter(
+            Q(fecha_salida__gt=limite.date())
+            | Q(fecha_salida=limite.date(), horario__hora_salida__gt=limite.time())
+        )
+        .select_related("ruta__origen", "ruta__destino", "bus", "horario")
+        .order_by("fecha_salida", "horario__hora_salida")
+    )
+    return con_conteo_de_asientos(viajes)
+
+
+def agrupar_asientos(asientos_viaje) -> list[tuple[int, list[list]]]:
+    """Arma [(piso, [[col1, col2, col3, col4], ...]), ...] para dibujar el mapa
+    2 + pasillo + 2 en la plantilla sin logica compleja ahi. Una celda vacia es None."""
+    pisos = defaultdict(lambda: defaultdict(dict))
+    for av in asientos_viaje:
+        pisos[av.asiento.piso or 1][av.asiento.fila or 0][av.asiento.columna or 0] = av
+
+    resultado = []
+    for piso in sorted(pisos):
+        filas = [
+            [pisos[piso][fila].get(columna) for columna in (1, 2, 3, 4)]
+            for fila in sorted(pisos[piso])
+        ]
+        resultado.append((piso, filas))
+    return resultado
+
+
+def mapa_de_asientos(viaje) -> list[tuple[int, list[list]]]:
+    """Mapa del viaje listo para la plantilla ventas/_mapa_asientos.html."""
+    asientos = viaje.asientos_viaje.select_related("asiento").order_by(
+        "asiento__piso", "asiento__fila", "asiento__columna"
+    )
+    return agrupar_asientos(asientos)

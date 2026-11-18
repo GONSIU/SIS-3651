@@ -42,8 +42,9 @@ class PermisosTests(PersonalTestCase):
 
     def test_enlace_del_sidebar_segun_rol(self):
         enlace = f'href="{reverse("personal:listado")}"'
+        # El cliente no entra al dashboard (403, Fase 2): no hay sidebar que revisar.
         for usuario, visible in ((self.supervisor, True), (self.admin, True),
-                                 (self.ventanillero, False), (self.cliente, False)):
+                                 (self.ventanillero, False)):
             with self.subTest(rol=usuario.rol):
                 self.client.force_login(usuario)
                 respuesta = self.client.get(reverse("core:index"))

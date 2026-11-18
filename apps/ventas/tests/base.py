@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.flota.models import Bus
 from apps.rutas.models import DIAS_VALIDOS, Horario, Ruta, Terminal
+from apps.usuarios.models import Usuario
 from apps.viajes.models import Viaje
 
 
@@ -25,6 +26,10 @@ class VentasTestCase(TestCase):
         cls.hoy = timezone.localdate()
         cls.viaje = cls.crear_viaje()
         cls.asiento = cls.viaje.asientos_viaje.first()
+        # Las vistas de venta exigen rol de personal (RolRequeridoMixin).
+        cls.vendedor = Usuario.objects.create_user(
+            username="vendedor", rol="ventanillero", terminal_asignado=origen
+        )
 
     @classmethod
     def crear_viaje(cls, **kwargs) -> Viaje:

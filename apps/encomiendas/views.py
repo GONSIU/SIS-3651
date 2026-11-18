@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -7,15 +6,18 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import DetailView, ListView
 
+from apps.core.mixins import RolRequeridoMixin
 from apps.ventas.views import EMPRESA_FISCAL
 from apps.viajes.models import Viaje
 from .forms import EncomiendaForm
 from .models import ComprobanteEncomienda, Encomienda, PagoEncomienda
 
-# Todas las vistas exigen sesion: la encomienda guarda quien la registro (registrado_por es NOT NULL).
+# Todas las vistas exigen rol de personal (RolRequeridoMixin, que tambien exige sesion):
+# la encomienda guarda quien la registro (registrado_por es NOT NULL).
 
 
-class ListaEncomiendasView(LoginRequiredMixin, ListView):
+class ListaEncomiendasView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     model = Encomienda
     template_name = "encomiendas/listado.html"
     context_object_name = "encomiendas"
@@ -45,7 +47,8 @@ class ListaEncomiendasView(LoginRequiredMixin, ListView):
         return context
 
 
-class NuevaEncomiendaView(LoginRequiredMixin, View):
+class NuevaEncomiendaView(RolRequeridoMixin, View):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     template_name = "encomiendas/nueva.html"
 
     def _contexto(self, form: EncomiendaForm) -> dict:
@@ -92,7 +95,8 @@ class NuevaEncomiendaView(LoginRequiredMixin, View):
         return render(request, self.template_name, self._contexto(form))
 
 
-class GuiaEncomiendaView(LoginRequiredMixin, DetailView):
+class GuiaEncomiendaView(RolRequeridoMixin, DetailView):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
     model = Encomienda
     template_name = "encomiendas/guia.html"
     context_object_name = "encomienda"
@@ -110,7 +114,9 @@ class GuiaEncomiendaView(LoginRequiredMixin, DetailView):
         return context
 
 
-class CambiarEstadoView(LoginRequiredMixin, View):
+class CambiarEstadoView(RolRequeridoMixin, View):
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+
     def post(self, request, pk):
         with transaction.atomic():
             encomienda = get_object_or_404(Encomienda.objects.select_for_update(), pk=pk)

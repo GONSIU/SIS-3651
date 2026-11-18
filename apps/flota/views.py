@@ -1,11 +1,14 @@
 from django.contrib import messages
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
+
+from apps.core.mixins import RolRequeridoMixin
 from .models import Bus
 from .forms import BusForm
 
 
-class ListaFlotaView(ListView):
+class ListaFlotaView(RolRequeridoMixin, ListView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Bus
     template_name = "flota/listado.html"
     context_object_name = "buses"
@@ -18,7 +21,8 @@ class ListaFlotaView(ListView):
         return context
 
 
-class NuevoBusView(CreateView):
+class NuevoBusView(RolRequeridoMixin, CreateView):
+    roles_permitidos = ["supervisor", "admin"]
     model = Bus
     form_class = BusForm
     template_name = "flota/nuevo.html"

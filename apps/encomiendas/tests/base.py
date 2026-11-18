@@ -26,7 +26,10 @@ class EncomiendasTestCase(TestCase):
         )
         cls.hoy = timezone.localdate()
         cls.viaje = cls.crear_viaje()
-        cls.usuario = Usuario.objects.create_user(username="operador", password="clave-segura-123")
+        # Las vistas exigen rol de personal (RolRequeridoMixin).
+        cls.usuario = Usuario.objects.create_user(
+            username="operador", password="clave-segura-123", rol="ventanillero", terminal_asignado=origen
+        )
 
     @classmethod
     def crear_viaje(cls, **kwargs) -> Viaje:

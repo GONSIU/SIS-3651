@@ -101,6 +101,7 @@
 </div>
 </div>
 <nav class="px-3 py-4 space-y-1">
+{% if user.rol == "ventanillero" or user.rol == "supervisor" or user.rol == "admin" %}
 <a class="nav-link {% block nav_dashboard %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'core:index' %}">
 <span class="material-symbols-outlined text-[20px]">dashboard</span>Dashboard
 </a>
@@ -110,9 +111,13 @@
 <a class="nav-link {% block nav_encomiendas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'encomiendas:listado' %}">
 <span class="material-symbols-outlined text-[20px]">package_2</span>Encomiendas
 </a>
+{% endif %}
+{% if user.rol == "supervisor" or user.rol == "admin" %}
 <a class="nav-link {% block nav_incidencias %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'incidencias:listado' %}">
 <span class="material-symbols-outlined text-[20px]">warning</span>Incidencias
 </a>
+{% endif %}
+{% if user.rol == "supervisor" or user.rol == "admin" %}
 <div class="my-3 border-t border-white/10"></div>
 <a class="nav-link {% block nav_rutas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'rutas:listado' %}">
 <span class="material-symbols-outlined text-[20px]">alt_route</span>Rutas
@@ -123,14 +128,17 @@
 <a class="nav-link {% block nav_flota %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'flota:listado' %}">
 <span class="material-symbols-outlined text-[20px]">directions_bus</span>Flota
 </a>
+{% endif %}
 {% if user.rol == "supervisor" or user.rol == "admin" %}
 <a class="nav-link {% block nav_personal %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'personal:listado' %}">
 <span class="material-symbols-outlined text-[20px]">badge</span>Personal
 </a>
 {% endif %}
+{% if user.rol == "supervisor" or user.rol == "admin" %}
 <a class="nav-link {% block nav_reportes %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'reportes:listado' %}">
 <span class="material-symbols-outlined text-[20px]">monitoring</span>Reportes
 </a>
+{% endif %}
 {% if user.rol == "admin" %}
 <a class="nav-link {% block nav_usuarios %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'usuarios:listado' %}">
 <span class="material-symbols-outlined text-[20px]">manage_accounts</span>Usuarios

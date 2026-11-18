@@ -11,7 +11,8 @@ class AsientoViajeInline(admin.TabularInline):
  
 @admin.register(Viaje)
 class ViajeAdmin(admin.ModelAdmin):
-    list_display = ("ruta", "fecha_salida", "horario", "bus", "estado", "minutos_retraso")
+    list_display = ("ruta", "fecha_salida", "horario", "bus", "conductor", "estado", "minutos_retraso")
+    list_select_related = ("ruta__origen", "ruta__destino", "horario", "bus", "conductor__usuario")
     list_filter = ("estado", "fecha_salida")
     inlines = [AsientoViajeInline]
  

@@ -19,7 +19,7 @@
 <table class="w-full text-left">
 <thead>
 <tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
-<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Salida Prog.</th><th class="px-5 py-3">Ocupación</th><th class="px-5 py-3">Estado</th>
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Conductor</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Salida Prog.</th><th class="px-5 py-3">Ocupación</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
@@ -27,6 +27,7 @@
 <tr>
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }}</td>
 <td class="px-5 py-3 font-label text-on-surface-variant">{{ viaje.bus.placa }} ({{ viaje.bus.nombre_tipo }})</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">{% if viaje.conductor %}{{ viaje.conductor.usuario }}{% else %}—{% endif %}</td>
 <td class="px-5 py-3 font-label">{{ viaje.fecha_salida }}</td>
 <td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida }}</td>
 <td class="px-5 py-3 font-label">{{ viaje.ocupacion_texto }}</td>
@@ -37,9 +38,10 @@
 {% elif viaje.estado == "cancelado" %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-red-100 text-red-800">CANCELADO</span>
 {% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">COMPLETADO</span>{% endif %}
 </td>
+<td class="px-5 py-3 text-right"><a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:underline" href="{% url 'viajes:hoja_ruta' viaje.pk %}"><span class="material-symbols-outlined text-[18px]">description</span>Hoja de ruta</a></td>
 </tr>
 {% empty %}
-<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">Todavía no hay viajes programados.</td></tr>
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="8">Todavía no hay viajes programados.</td></tr>
 {% endfor %}
 </tbody>
 </table>

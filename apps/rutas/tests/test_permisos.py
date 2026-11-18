@@ -4,7 +4,7 @@ from django.urls import reverse
 from apps.rutas.models import Ruta, Terminal
 from apps.usuarios.models import Usuario
 
-ROLES = ("cliente", "ventanillero", "supervisor", "admin")
+ROLES = ("cliente", "ventanillero", "supervisor", "admin", "conductor")
 
 
 def crear_usuarios_por_rol(terminal) -> dict:

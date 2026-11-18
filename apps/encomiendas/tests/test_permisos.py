@@ -3,7 +3,7 @@ from django.urls import reverse
 from apps.usuarios.models import Usuario
 from .base import EncomiendasTestCase
 
-ROLES = ("cliente", "ventanillero", "supervisor", "admin")
+ROLES = ("cliente", "ventanillero", "supervisor", "admin", "conductor")
 
 
 def crear_usuarios_por_rol(terminal) -> dict:

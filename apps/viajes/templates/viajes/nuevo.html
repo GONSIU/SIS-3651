@@ -46,6 +46,12 @@ Necesitas al menos una <a class="text-deep-navy underline" href="#">ruta activa<
 {% if form.fecha_salida.errors %}<p class="text-body-sm text-error mt-1">{{ form.fecha_salida.errors.0 }}</p>{% endif %}
 </div>
 <div class="sm:col-span-2">
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.conductor.id_for_label }}">Conductor</label>
+{{ form.conductor }}
+<p class="text-body-sm text-on-surface-variant mt-1">{{ form.conductor.help_text }}</p>
+{% if form.conductor.errors %}<p class="text-body-sm text-error mt-1">{{ form.conductor.errors.0 }}</p>{% endif %}
+</div>
+<div class="sm:col-span-2">
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.estado.id_for_label }}">Estado inicial</label>
 {{ form.estado }}
 </div>

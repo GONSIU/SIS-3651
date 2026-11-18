@@ -112,6 +112,11 @@
 <span class="material-symbols-outlined text-[20px]">package_2</span>Encomiendas
 </a>
 {% endif %}
+{% if user.rol == "conductor" %}
+<a class="nav-link {% block nav_mis_viajes %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'viajes:mis_viajes' %}">
+<span class="material-symbols-outlined text-[20px]">route</span>Mis Viajes
+</a>
+{% endif %}
 {% if user.rol == "supervisor" or user.rol == "admin" %}
 <a class="nav-link {% block nav_incidencias %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'incidencias:listado' %}">
 <span class="material-symbols-outlined text-[20px]">warning</span>Incidencias

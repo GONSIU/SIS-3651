@@ -1,10 +1,16 @@
+from datetime import date, time, timedelta
+
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from apps.rutas.models import Terminal
+from apps.flota.models import Bus
+from apps.personal.models import Empleado
+from apps.rutas.models import DIAS_VALIDOS, Horario, Ruta, Terminal
 from apps.usuarios.models import Usuario
+from apps.viajes.models import Viaje
 
-ROLES = ("cliente", "ventanillero", "supervisor", "admin")
+ROLES = ("cliente", "ventanillero", "supervisor", "admin", "conductor")
 
 
 def crear_usuarios_por_rol(terminal) -> dict:
@@ -38,3 +44,20 @@ class ViajesPermisosTests(ComprobarPermisosMixin, TestCase):
 
     def test_permisos(self):
         self.comprobar_get([reverse("viajes:listado"), reverse("viajes:nuevo")], {"supervisor", "admin"})
+
+    def test_mis_viajes_solo_conductor(self):
+        self.comprobar_get([reverse("viajes:mis_viajes")], {"conductor"})
+
+    def test_hoja_ruta_conductor_asignado_supervisor_y_admin(self):
+        terminal = self.usuarios["admin"].terminal_asignado
+        ruta = Ruta.objects.create(origen=terminal, destino=Terminal.objects.create(nombre="Central", ciudad="Oruro"))
+        horario = Horario.objects.create(ruta=ruta, hora_salida=time(8), dias_semana=",".join(DIAS_VALIDOS))
+        bus = Bus.objects.create(placa="1234ABC", nombre_tipo="Cama", capacidad_pasajeros=10, capacidad_carga_kg=0)
+        conductor = Empleado.objects.create(
+            usuario=self.usuarios["conductor"], cargo="Conductor", fecha_ingreso=date(2024, 1, 1)
+        )
+        viaje = Viaje.objects.create(
+            ruta=ruta, horario=horario, bus=bus, conductor=conductor,
+            fecha_salida=timezone.localdate() + timedelta(days=1),
+        )
+        self.comprobar_get([reverse("viajes:hoja_ruta", args=[viaje.pk])], {"conductor", "supervisor", "admin"})

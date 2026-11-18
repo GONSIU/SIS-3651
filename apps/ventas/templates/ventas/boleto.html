@@ -87,7 +87,14 @@
 </div>
 
 <div class="text-[11px] space-y-1 mb-3 border-b border-dashed border-gray-400 pb-3">
+{% if pasaje.reprogramado_de_id %}
+<p class="text-gray-500">Reprogramación del pasaje <span class="mono">{{ pasaje.reprogramado_de.codigo_pasaje }}</span></p>
+<div class="flex justify-between"><span class="text-gray-500">Pasaje</span><span class="mono">Bs {{ pasaje.precio_sin_cargo }}</span></div>
+<div class="flex justify-between"><span class="text-gray-500">Cargo de reprogramación</span><span class="mono">Bs {{ pasaje.cargo_reprogramacion }}</span></div>
+<div class="flex justify-between"><span class="text-gray-500">Crédito pasaje anterior</span><span class="mono">- Bs {{ pasaje.credito_reprogramacion }}</span></div>
+{% else %}
 <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="mono">Bs {{ pasaje.precio }}</span></div>
+{% endif %}
 <div class="flex justify-between"><span class="text-gray-500">Descuento</span><span class="mono">Bs 0.00</span></div>
 <div class="flex justify-between font-bold text-sm mt-1"><span>TOTAL</span><span class="mono">Bs {{ pasaje.precio }}</span></div>
 {% for pago in pagos %}<div class="flex justify-between text-gray-500{% if forloop.first %} mt-1{% endif %}"><span>Pago {{ pago.created_at|date:"d/m H:i" }} · {{ pago.get_metodo_display }}</span><span class="mono">Bs {{ pago.monto }}</span></div>{% endfor %}

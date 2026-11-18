@@ -28,6 +28,9 @@ PORCENTAJE_ANTICIPO_MINIMO = Decimal("0.30")
 # Limites contra reservas abusivas (por cuenta).
 MAX_PASAJES_ONLINE_POR_VIAJE = 4
 MAX_RESERVAS_PENDIENTES = 6
+# Reprogramacion de un pasaje no_show: cargo fijo y plazo desde la salida perdida.
+CARGO_REPROGRAMACION = Decimal("20.00")
+PLAZO_REPROGRAMACION = timedelta(days=7)
 
 
 @dataclass(frozen=True)
@@ -229,6 +232,19 @@ def con_conteo_de_asientos(viajes):
         num_asientos=Count("asientos_viaje"),
         num_libres=Count("asientos_viaje", filter=Q(asientos_viaje__estado="disponible")),
     )
+
+
+def viajes_vendibles(fecha=None):
+    """Viajes que la ventanilla puede vender: desde hoy y sin salir, terminar ni cancelarse."""
+    viajes = (
+        Viaje.objects.filter(fecha_salida__gte=timezone.localdate())
+        .exclude(estado__in=Viaje.ESTADOS_SIN_VENTA)
+        .select_related("ruta__origen", "ruta__destino", "bus", "horario")
+        .order_by("fecha_salida", "horario__hora_salida")
+    )
+    if fecha:
+        viajes = viajes.filter(fecha_salida=fecha)
+    return con_conteo_de_asientos(viajes)
 
 
 def viajes_reservables_online(ahora: datetime | None = None):
@@ -473,3 +489,128 @@ def cobrar_saldo(
             comprobante.full_clean()
             comprobante.save(update_fields=["tipo", "nit_cliente", "razon_social_cliente"])
     return pasaje
+
+
+# --- Reprogramacion -------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class CalculoReprogramacion:
+    """Lo que cuesta reprogramar. El credito nunca cubre el cargo, que siempre se paga."""
+
+    precio_viaje: Decimal
+    cargo: Decimal
+    credito: Decimal
+    a_pagar: Decimal
+
+    @property
+    def precio_total(self) -> Decimal:
+        return self.precio_viaje + self.cargo
+
+
+def calcular_reprogramacion(original: Pasaje, precio_viaje: Decimal) -> CalculoReprogramacion:
+    """Lo pagado en el original es credito, hasta el precio del viaje nuevo: si el nuevo
+    es mas barato la diferencia no se devuelve (no hay reembolsos)."""
+    credito = min(original.total_pagado, precio_viaje)
+    return CalculoReprogramacion(
+        precio_viaje=precio_viaje,
+        cargo=CARGO_REPROGRAMACION,
+        credito=credito,
+        a_pagar=precio_viaje + CARGO_REPROGRAMACION - credito,
+    )
+
+
+def motivo_no_reprogramable(pasaje: Pasaje, ahora: datetime | None = None) -> str | None:
+    """Por que no se puede reprogramar, o None si se puede."""
+    ahora = ahora or timezone.now()
+    if pasaje.estado != "no_show":
+        return "Solo se reprograma el pasaje de alguien que no se presento al viaje."
+    if pasaje.reprogramado_de_id:
+        return "Este pasaje ya es una reprogramacion: solo se reprograma una vez."
+    limite = pasaje.viaje.salida_programada + PLAZO_REPROGRAMACION
+    if ahora > limite:
+        return f"El plazo para reprogramar vencio el {timezone.localtime(limite):%d/%m/%Y %H:%M}."
+    return None
+
+
+def pasajes_reprogramables(ahora: datetime | None = None):
+    """no_show que no son reprogramaciones y cuyo viaje salio dentro del plazo.
+
+    El filtro por fecha es aproximado (por dia); motivo_no_reprogramable() hace el
+    chequeo exacto con la hora antes de reprogramar."""
+    ahora = ahora or timezone.now()
+    desde = (timezone.localtime(ahora) - PLAZO_REPROGRAMACION).date()
+    return (
+        Pasaje.objects.filter(estado="no_show", reprogramado_de__isnull=True, viaje__fecha_salida__gte=desde)
+        .select_related("viaje__ruta__origen", "viaje__ruta__destino", "viaje__horario", "asiento_viaje__asiento", "cliente")
+        .prefetch_related("pagos")
+        .order_by("-viaje__fecha_salida")
+    )
+
+
+def reprogramar_pasaje(
+    *,
+    original_id: int,
+    viaje,
+    asiento_viaje_id: int,
+    precio_viaje: Decimal,
+    pago: DatosPago,
+    cobrado_por,
+    facturacion: DatosFacturacion | None = None,
+    ahora: datetime | None = None,
+) -> Pasaje:
+    """Crea un pasaje nuevo para el pasajero que perdio el bus.
+
+    El original pasa a "reprogramado" y no se edita: queda como historial. El nuevo
+    lleva los mismos datos del pasajero, el credito de lo pagado y el cargo. Se cobra
+    calcular_reprogramacion().a_pagar (monto del servidor, nunca del formulario)."""
+    ahora = ahora or timezone.now()
+    facturacion = facturacion or DatosFacturacion()
+    liberar_reservas_vencidas(viaje=viaje, ahora=ahora)
+
+    with transaction.atomic():
+        original = (
+            Pasaje.objects.select_for_update(of=("self",))
+            .select_related("viaje__horario")
+            .prefetch_related("pagos")
+            .filter(pk=original_id)
+            .first()
+        )
+        if original is None:
+            raise ValidationError("No existe ese pasaje.")
+        motivo = motivo_no_reprogramable(original, ahora)
+        if motivo:
+            raise ValidationError(motivo)
+        if viaje.pk == original.viaje_id:
+            raise ValidationError("Elige un viaje distinto del que se perdio.")
+
+        asiento_viaje = _bloquear_asiento_libre(viaje, asiento_viaje_id)
+        calculo = calcular_reprogramacion(original, precio_viaje)
+        nuevo = Pasaje(
+            viaje=viaje,
+            asiento_viaje=asiento_viaje,
+            cliente=original.cliente,
+            cliente_nombre=original.cliente_nombre,
+            cliente_ci=original.cliente_ci,
+            cliente_telefono=original.cliente_telefono,
+            vendido_por=cobrado_por,
+            actualizado_por=cobrado_por,
+            canal="ventanilla",
+            precio=calculo.precio_total,
+            cargo_reprogramacion=calculo.cargo,
+            credito_reprogramacion=calculo.credito,
+            reprogramado_de=original,
+        )
+        nuevo.full_clean()
+        nuevo.save()
+        nuevo.marcar_como_vendido()
+        _registrar_pago(
+            nuevo, DatosPago(metodo=pago.metodo, monto=calculo.a_pagar, referencia=pago.referencia),
+            registrado_por=cobrado_por,
+        )
+        _emitir_comprobante(nuevo, facturacion)
+
+        original.estado = "reprogramado"
+        original.actualizado_por = cobrado_por
+        original.save(update_fields=["estado", "actualizado_por", "updated_at"])
+    return nuevo

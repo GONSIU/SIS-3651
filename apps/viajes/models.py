@@ -28,6 +28,8 @@ class Viaje(models.Model):
     }
     # Un viaje en estos estados ya no vende pasajes ni recibe encomiendas.
     ESTADOS_SIN_VENTA = ("en_curso", "completado", "cancelado")
+    # Estados en los que todavia se marca quien abordo (antes de la salida).
+    ESTADOS_CON_ABORDAJE = ("programado", "retrasado")
     MAX_MINUTOS_RETRASO = 24 * 60
 
     ruta = models.ForeignKey(Ruta, related_name="viajes", on_delete=models.PROTECT)
@@ -228,6 +230,31 @@ class Viaje(models.Model):
         self.minutos_retraso = max(0, int(segundos_tarde // 60))
         self.hora_salida_real = momento
         self._guardar_estado("en_curso", usuario, "minutos_retraso", "hora_salida_real")
+        self._cerrar_pasajes_al_salir(momento)
+
+    def registrar_abordaje(self, ids_abordaron) -> int:
+        """Marca abordo=True en los pasajes pagados indicados y False en el resto.
+
+        Usa el manager relacionado (self.pasajes) para no importar apps.ventas: viajes
+        esta por debajo de ventas en el grafo de dependencias. Devuelve cuantos abordaron."""
+        if self.estado not in self.ESTADOS_CON_ABORDAJE:
+            raise ValidationError("El abordaje se marca antes de registrar la salida.")
+        pagados = self.pasajes.filter(estado="pagado")
+        ids = set(pagados.filter(pk__in=ids_abordaron).values_list("pk", flat=True))
+        pagados.filter(pk__in=ids).update(abordo=True)
+        pagados.exclude(pk__in=ids).update(abordo=False)
+        return len(ids)
+
+    def _cerrar_pasajes_al_salir(self, momento: datetime) -> None:
+        """Al salir el bus: pagados que abordaron -> usado; pagados que no -> no_show;
+        reservas sin saldo pagado -> vencido (el anticipo se pierde) y su asiento libre.
+
+        update() no pasa por save(): updated_at se pone a mano."""
+        reservas = self.pasajes.filter(estado="reservado")
+        self.asientos_viaje.filter(pasajes__in=reservas, estado="reservado").update(estado="disponible")
+        reservas.update(estado="vencido", updated_at=momento)
+        self.pasajes.filter(estado="pagado", abordo=True).update(estado="usado", updated_at=momento)
+        self.pasajes.filter(estado="pagado", abordo=False).update(estado="no_show", updated_at=momento)
 
     def registrar_llegada(self, usuario, momento: datetime | None = None) -> None:
         """Marca la llegada real y completa el viaje."""

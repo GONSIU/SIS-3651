@@ -1,0 +1,96 @@
+{% extends "base_dashboard.html" %}
+{% load core_extras %}
+
+{% block title %}Reprogramar {{ original.codigo_pasaje }} — Trans Naser{% endblock %}
+{% block nav_reprogramaciones %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'ventas:reprogramaciones' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reprogramar pasaje</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1"><span class="mono">{{ original.codigo_pasaje }}</span> · {{ original.nombre_pasajero }} · perdió {{ original.viaje.ruta.origen.ciudad }} → {{ original.viaje.ruta.destino.ciudad }} del {{ original.viaje.fecha_salida|date:"d/m/Y" }} · pagó {{ original.total_pagado|moneda }}</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="flex items-center justify-between px-5 py-4 border-b border-surface-container-highest">
+<h3 class="font-headline text-headline-md text-deep-navy">1. Viaje nuevo</h3>
+<form method="get" class="flex items-center gap-2">
+<input class="form-input-custom border border-outline-variant rounded px-3 py-2 font-body-sm text-body-sm" name="fecha" type="date" value="{{ fecha|date:'Y-m-d' }}"/>
+<button class="bg-deep-navy hover:bg-secondary text-white font-label text-label-md px-4 py-2 rounded" type="submit">Filtrar</button>
+</form>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Hora</th><th class="px-5 py-3">Precio base</th><th class="px-5 py-3">Libres</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for viaje in viajes %}
+<tr class="{% if viaje == viaje_seleccionado %}bg-surface-container-low{% endif %}">
+<td class="px-5 py-3 font-label text-deep-navy">{{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.fecha_salida|date:"d/m/Y" }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3 font-label">{% if viaje.ruta.precio_base %}{{ viaje.ruta.precio_base|moneda }}{% else %}&mdash;{% endif %}</td>
+<td class="px-5 py-3 font-label">{{ viaje.num_libres }} de {{ viaje.num_asientos }}</td>
+<td class="px-5 py-3 text-right"><a class="font-label text-label-md text-deep-navy hover:text-signal-orange" href="?viaje={{ viaje.pk }}{% if fecha %}&fecha={{ fecha|date:'Y-m-d' }}{% endif %}">Elegir</a></td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center text-on-surface-variant" colspan="6">No hay viajes disponibles{% if fecha %} el {{ fecha|date:"d/m/Y" }}{% endif %}.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+{% if viaje_seleccionado %}
+<form method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+{% csrf_token %}
+<input name="viaje_id" type="hidden" value="{{ viaje_seleccionado.pk }}"/>
+{% if fecha %}<input name="fecha" type="hidden" value="{{ fecha|date:'Y-m-d' }}"/>{% endif %}
+
+<div class="lg:col-span-2 space-y-6">
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+{% endif %}
+<div class="card-panel rounded-lg p-5">
+<h3 class="font-headline text-headline-md text-deep-navy mb-3">2. Asiento</h3>
+{% for error in form.asiento_viaje_id.errors %}<p class="text-body-sm text-error mb-2">{{ error }}</p>{% endfor %}
+{% include "ventas/_mapa_asientos.html" with seleccionable=True %}
+</div>
+<div class="card-panel rounded-lg p-5 space-y-4">
+<h3 class="font-headline text-headline-md text-deep-navy">3. Pago</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.precio %}
+{% include "ventas/cliente/_campo.html" with campo=form.metodo_pago %}
+{% include "ventas/cliente/_campo.html" with campo=form.referencia %}
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.nit %}
+{% include "ventas/cliente/_campo.html" with campo=form.razon_social %}
+</div>
+</div>
+</div>
+
+<aside class="card-panel rounded-lg p-5 space-y-3 self-start">
+<h3 class="font-headline text-headline-md text-deep-navy">Resumen</h3>
+<p class="font-body-sm text-body-sm">{{ viaje_seleccionado.ruta.origen.ciudad }} → {{ viaje_seleccionado.ruta.destino.ciudad }}, {{ viaje_seleccionado.fecha_salida|date:"d/m/Y" }} {{ viaje_seleccionado.horario.hora_salida|time:"H:i" }}</p>
+{% if calculo %}
+<dl class="space-y-1.5 font-body-sm text-body-sm">
+<div class="flex justify-between"><dt>Pasaje nuevo</dt><dd class="font-label">{{ calculo.precio_viaje|moneda }}</dd></div>
+<div class="flex justify-between"><dt>Cargo de reprogramación</dt><dd class="font-label">{{ calculo.cargo|moneda }}</dd></div>
+<div class="flex justify-between"><dt>Crédito del pasaje anterior</dt><dd class="font-label">- {{ calculo.credito|moneda }}</dd></div>
+<div class="flex justify-between font-bold text-deep-navy border-t border-surface-container-highest pt-1.5"><dt>A pagar ahora</dt><dd>{{ calculo.a_pagar|moneda }}</dd></div>
+</dl>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Si el pasaje nuevo cuesta menos que lo pagado, la diferencia no se devuelve. Si cambias el precio, el monto se recalcula al confirmar.</p>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ingresa el precio para ver el monto a pagar.</p>
+{% endif %}
+<button class="w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">event_repeat</span>Reprogramar y emitir boleto</button>
+</aside>
+</form>
+{% endif %}
+{% endblock %}

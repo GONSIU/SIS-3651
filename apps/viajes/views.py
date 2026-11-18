@@ -126,7 +126,8 @@ class HojaRutaView(RolRequeridoMixin, DetailView):
     template_name = "viajes/hoja_ruta.html"
     context_object_name = "viaje"
     # Pasajes que viajan; los cancelados ya no ocupan el asiento.
-    ESTADOS_PASAJE_A_BORDO = ("reservado", "pagado", "usado")
+    # Pasajes que se listan; los cancelados, vencidos y reprogramados ya no viajan.
+    ESTADOS_PASAJE_A_BORDO = ("reservado", "pagado", "usado", "no_show")
 
     def get_queryset(self):
         viajes = Viaje.objects.select_related(
@@ -160,6 +161,7 @@ class HojaRutaView(RolRequeridoMixin, DetailView):
                     "viajes:mis_viajes" if self.request.user.rol == "conductor" else "viajes:listado"
                 ),
                 "acciones": acciones_permitidas(self.object, self.request.user),
+                "puede_marcar_abordaje": self.object.estado in Viaje.ESTADOS_CON_ABORDAJE,
                 "retraso_form": RetrasoForm(),
             }
         )
@@ -215,3 +217,28 @@ class ControlViajeView(RolRequeridoMixin, View):
             return f"Llegada registrada a las {timezone.localtime(viaje.hora_llegada_real):%H:%M}. Viaje completado."
         viaje.cancelar(usuario)
         return "Viaje cancelado."
+
+
+class AbordajeView(RolRequeridoMixin, View):
+    """Guarda quien abordo (casillas de la hoja de ruta). Solo POST y antes de la salida.
+
+    El conductor solo marca sus viajes (otro da 404). Bloquea el viaje para que no se
+    registre la salida mientras se guarda el abordaje."""
+
+    roles_permitidos = ["conductor", "supervisor", "admin"]
+    http_method_names = ["post"]
+
+    def post(self, request, pk: int):
+        with transaction.atomic():
+            viajes = Viaje.objects.select_for_update(of=("self",))
+            if request.user.rol == "conductor":
+                viajes = viajes.filter(conductor__usuario=request.user)
+            viaje = get_object_or_404(viajes, pk=pk)
+            ids = [valor for valor in request.POST.getlist("abordo") if valor.isdigit()]
+            try:
+                cantidad = viaje.registrar_abordaje([int(valor) for valor in ids])
+            except ValidationError as error:
+                messages.error(request, " ".join(error.messages))
+            else:
+                messages.success(request, f"Abordaje guardado: {cantidad} pasajero(s) a bordo.")
+        return redirect("viajes:hoja_ruta", pk=pk)

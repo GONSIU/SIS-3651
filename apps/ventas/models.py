@@ -26,7 +26,6 @@ class Pasaje(models.Model):
         ("reservado", "Reservado"),
         ("pagado", "Pagado"),
         ("cancelado", "Cancelado"),
-        ("reembolsado", "Reembolsado"),
         ("usado", "Usado"),
     ]
 

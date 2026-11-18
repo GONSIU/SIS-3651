@@ -132,7 +132,7 @@ class Encomienda(models.Model):
             if self.estado != "registrado":
                 errores.setdefault("estado", []).append("Una encomienda nueva empieza como registrada.")
             if self.viaje_id:
-                if self.viaje.estado in ("cancelado", "completado"):
+                if self.viaje.estado in Viaje.ESTADOS_SIN_VENTA:
                     errores.setdefault("viaje", []).append(
                         f"No se puede enviar: el viaje esta {self.viaje.get_estado_display().lower()}."
                     )

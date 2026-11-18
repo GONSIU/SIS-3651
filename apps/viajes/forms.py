@@ -20,7 +20,9 @@ def conductores_disponibles():
 class ViajeForm(forms.ModelForm):
     class Meta:
         model = Viaje
-        fields = ["ruta", "horario", "bus", "conductor", "fecha_salida", "estado"]
+        # Sin "estado": todo viaje nace programado y avanza con los metodos de control
+        # (marcar_retraso, registrar_salida, ...), que validan las transiciones.
+        fields = ["ruta", "horario", "bus", "conductor", "fecha_salida"]
         help_texts = {
             "conductor": "Opcional. Solo aparecen conductores activos con ficha en Personal.",
         }
@@ -30,7 +32,6 @@ class ViajeForm(forms.ModelForm):
             "bus": forms.Select(attrs={"class": SELECT_CLASSES}),
             "conductor": forms.Select(attrs={"class": SELECT_CLASSES}),
             "fecha_salida": forms.DateInput(attrs={"class": INPUT_CLASSES, "type": "date"}),
-            "estado": forms.Select(attrs={"class": SELECT_CLASSES}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -40,3 +41,12 @@ class ViajeForm(forms.ModelForm):
         self.fields["horario"].queryset = Horario.objects.select_related("ruta")
         self.fields["conductor"].queryset = conductores_disponibles()
         self.fields["conductor"].empty_label = "Sin conductor asignado"
+
+
+class RetrasoForm(forms.Form):
+    minutos = forms.IntegerField(
+        min_value=1,
+        max_value=Viaje.MAX_MINUTOS_RETRASO,
+        label="Minutos de retraso estimado",
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 30"}),
+    )

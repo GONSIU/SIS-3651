@@ -1,14 +1,38 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView
 
 from apps.core.mixins import RolRequeridoMixin
+from .forms import RetrasoForm, ViajeForm
 from .models import Viaje
-from .forms import ViajeForm
+
+# Accion del formulario -> estado al que lleva el viaje.
+ACCIONES_CONTROL = {
+    "retraso": "retrasado",
+    "salida": "en_curso",
+    "llegada": "completado",
+    "cancelar": "cancelado",
+}
+# El conductor reporta lo que pasa en su viaje; cancelarlo es una decision de gestion.
+ACCIONES_SOLO_GESTION = frozenset({"cancelar"})
+
+
+def acciones_permitidas(viaje: Viaje, usuario) -> list[str]:
+    """Acciones de control que ese usuario puede ejecutar ahora sobre el viaje."""
+    return [
+        accion
+        for accion, estado in ACCIONES_CONTROL.items()
+        if estado in viaje.estados_siguientes
+        and not (usuario.rol == "conductor" and accion in ACCIONES_SOLO_GESTION)
+    ]
 
 
 class ListaViajesView(RolRequeridoMixin, ListView):
@@ -135,6 +159,59 @@ class HojaRutaView(RolRequeridoMixin, DetailView):
                 "url_volver": reverse(
                     "viajes:mis_viajes" if self.request.user.rol == "conductor" else "viajes:listado"
                 ),
+                "acciones": acciones_permitidas(self.object, self.request.user),
+                "retraso_form": RetrasoForm(),
             }
         )
         return context
+
+
+class ControlViajeView(RolRequeridoMixin, View):
+    """Registra retraso, salida, llegada o cancelacion (solo POST).
+
+    Bloquea el viaje con select_for_update(): si dos personas pulsan a la vez, la
+    segunda ve el estado ya cambiado y su transicion se rechaza en vez de pisarla."""
+
+    roles_permitidos = ["conductor", "supervisor", "admin"]
+    http_method_names = ["post"]
+
+    def post(self, request, pk: int):
+        accion = request.POST.get("accion", "")
+        if accion not in ACCIONES_CONTROL:
+            messages.error(request, "Accion no valida.")
+            return redirect("viajes:hoja_ruta", pk=pk)
+        if request.user.rol == "conductor" and accion in ACCIONES_SOLO_GESTION:
+            raise PermissionDenied
+
+        with transaction.atomic():
+            # of=("self",): bloquea solo la fila del viaje, no las tablas del join.
+            viajes = Viaje.objects.select_for_update(of=("self",)).select_related("horario")
+            if request.user.rol == "conductor":
+                viajes = viajes.filter(conductor__usuario=request.user)
+            viaje = get_object_or_404(viajes, pk=pk)
+            try:
+                mensaje = self._ejecutar(accion, viaje, request)
+            except ValidationError as error:
+                messages.error(request, " ".join(error.messages))
+            else:
+                messages.success(request, mensaje)
+        return redirect("viajes:hoja_ruta", pk=pk)
+
+    def _ejecutar(self, accion: str, viaje: Viaje, request) -> str:
+        usuario = request.user
+        if accion == "retraso":
+            form = RetrasoForm(request.POST)
+            if not form.is_valid():
+                raise ValidationError(form.errors["minutos"])
+            viaje.marcar_retraso(form.cleaned_data["minutos"], usuario)
+            return f"Retraso estimado de {viaje.minutos_retraso} min registrado."
+        if accion == "salida":
+            viaje.registrar_salida(usuario)
+            if viaje.minutos_retraso:
+                return f"Salida registrada con {viaje.minutos_retraso} min de retraso."
+            return "Salida registrada a tiempo."
+        if accion == "llegada":
+            viaje.registrar_llegada(usuario)
+            return f"Llegada registrada a las {timezone.localtime(viaje.hora_llegada_real):%H:%M}. Viaje completado."
+        viaje.cancelar(usuario)
+        return "Viaje cancelado."

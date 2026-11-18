@@ -31,6 +31,9 @@ class Pasaje(models.Model):
         ("cancelado", "Cancelado"),
         ("vencido", "Vencido"),
         ("usado", "Usado"),
+        # Pagado pero no abordo cuando salio el bus. Es el unico que se puede reprogramar.
+        ("no_show", "No se presento"),
+        ("reprogramado", "Reprogramado"),
     ]
     # Un asiento solo puede tener un pasaje en estos estados a la vez. Un pasaje
     # cancelado o vencido ya no ocupa el asiento y se puede volver a vender.
@@ -76,6 +79,9 @@ class Pasaje(models.Model):
     # Solo reservas sin pagar por completo: pasada esta hora, liberar_reservas_vencidas()
     # las pasa a "vencido" y libera el asiento.
     reservado_hasta = models.DateTimeField(null=True, blank=True)
+    # Lo marca el conductor en la hoja de ruta antes de salir. Al registrar la salida,
+    # los pagados con abordo pasan a "usado" y los demas a "no_show".
+    abordo = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

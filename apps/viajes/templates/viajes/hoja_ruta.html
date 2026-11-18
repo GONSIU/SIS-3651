@@ -94,15 +94,20 @@
 </dl>
 
 <h2 class="text-lg font-bold mt-5 mb-2">Pasajeros ({{ pasajes|length }})</h2>
+{% if puede_marcar_abordaje and acciones %}
+<p class="no-print text-xs text-gray-600 mb-2">Marca a quienes subieron y pulsa "Guardar abordaje" antes de registrar la salida. Los pasajes pagados sin marcar quedan como "No se presentó" y solo esos se pueden reprogramar.</p>
+<form id="form-abordaje" method="post" action="{% url 'viajes:abordaje' viaje.pk %}">{% csrf_token %}</form>
+{% endif %}
 <table class="w-full text-sm border-collapse">
 <thead>
 <tr class="bg-gray-100 text-left">
-<th class="px-3 py-2 border">Asiento</th><th class="px-3 py-2 border">Pasajero</th><th class="px-3 py-2 border">CI</th><th class="px-3 py-2 border">Telefono</th><th class="px-3 py-2 border">Pasaje</th><th class="px-3 py-2 border">Estado</th>
+<th class="px-3 py-2 border">Abordó</th><th class="px-3 py-2 border">Asiento</th><th class="px-3 py-2 border">Pasajero</th><th class="px-3 py-2 border">CI</th><th class="px-3 py-2 border">Telefono</th><th class="px-3 py-2 border">Pasaje</th><th class="px-3 py-2 border">Estado</th>
 </tr>
 </thead>
 <tbody>
 {% for pasaje in pasajes %}
 <tr>
+<td class="px-3 py-2 border text-center">{% if pasaje.estado == "pagado" and puede_marcar_abordaje and acciones %}<input form="form-abordaje" type="checkbox" name="abordo" value="{{ pasaje.pk }}" class="h-4 w-4" {% if pasaje.abordo %}checked{% endif %} aria-label="Abordó asiento {{ pasaje.asiento_viaje.asiento.numero }}"/>{% elif pasaje.estado == "usado" %}Sí{% elif pasaje.estado == "no_show" %}No{% else %}&#9744;{% endif %}</td>
 <td class="px-3 py-2 border mono">{{ pasaje.asiento_viaje.asiento.numero }}</td>
 <td class="px-3 py-2 border">{{ pasaje.nombre_pasajero }}</td>
 <td class="px-3 py-2 border mono">{% firstof pasaje.cliente_ci pasaje.cliente.ci "—" %}</td>
@@ -111,10 +116,13 @@
 <td class="px-3 py-2 border">{% if pasaje.estado == "reservado" %}<strong>Por pagar</strong>{% else %}{{ pasaje.get_estado_display }}{% endif %}</td>
 </tr>
 {% empty %}
-<tr><td class="px-3 py-3 border text-center text-gray-500" colspan="6">Sin pasajeros registrados.</td></tr>
+<tr><td class="px-3 py-3 border text-center text-gray-500" colspan="7">Sin pasajeros registrados.</td></tr>
 {% endfor %}
 </tbody>
 </table>
+{% if puede_marcar_abordaje and acciones and pasajes %}
+<button form="form-abordaje" type="submit" class="no-print mt-2 bg-[#0a192f] hover:bg-[#13294b] text-white text-sm font-semibold px-4 py-2 rounded">Guardar abordaje</button>
+{% endif %}
 
 <h2 class="text-lg font-bold mt-6 mb-2">Encomiendas a bordo ({{ encomiendas|length }} — {{ peso_total_kg }} kg)</h2>
 <table class="w-full text-sm border-collapse">

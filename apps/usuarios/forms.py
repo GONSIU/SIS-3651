@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
@@ -125,3 +125,18 @@ class UsuarioEditForm(forms.ModelForm):
         if se_desactiva:
             self.add_error("is_active", motivo)
         return cleaned_data
+
+
+class RestablecerPasswordForm(SetPasswordForm):
+    """El admin asigna una contrasena temporal nueva a otro usuario.
+
+    Reutiliza SetPasswordForm de Django: compara las dos contrasenas, aplica
+    AUTH_PASSWORD_VALIDATORS contra el usuario y guarda con set_password() (solo el
+    hash). No pide la contrasena anterior: nadie la conoce."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["new_password1"].label = "Contrasena temporal nueva"
+        self.fields["new_password2"].label = "Repite la contrasena"
+        for campo in self.fields.values():
+            campo.widget.attrs["class"] = INPUT_CLASSES

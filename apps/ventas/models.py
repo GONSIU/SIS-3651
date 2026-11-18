@@ -106,7 +106,7 @@ class Pasaje(models.Model):
         # Solo al crear: un pasaje ya vendido debe poder editarse aunque el viaje termine.
         if self._state.adding:
             if self.viaje_id:
-                if self.viaje.estado in ("cancelado", "completado"):
+                if self.viaje.estado in Viaje.ESTADOS_SIN_VENTA:
                     errores.setdefault("viaje", []).append(
                         f"No se puede vender: el viaje esta {self.viaje.get_estado_display().lower()}."
                     )

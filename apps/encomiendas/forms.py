@@ -10,10 +10,10 @@ SELECT_CLASSES = INPUT_CLASSES + " bg-white"
 
 
 def viajes_para_encomienda():
-    """Viajes que todavia pueden recibir carga: no cancelados, no completados, sin salida pasada."""
+    """Viajes que todavia pueden recibir carga: que no salieron ni terminaron, sin fecha pasada."""
     return (
         Viaje.objects.filter(fecha_salida__gte=timezone.localdate())
-        .exclude(estado__in=["cancelado", "completado"])
+        .exclude(estado__in=Viaje.ESTADOS_SIN_VENTA)
         .select_related("ruta__origen", "ruta__destino", "bus", "horario")
         .order_by("fecha_salida", "horario__hora_salida")
     )

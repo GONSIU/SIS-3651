@@ -24,6 +24,53 @@
 <button onclick="window.print()" class="bg-[#f47920] hover:bg-[#d9671a] text-white text-sm font-semibold px-4 py-2 rounded shadow-sm">Imprimir hoja de ruta</button>
 </div>
 
+{% if messages %}
+<div class="no-print w-full max-w-3xl mb-4 space-y-2">
+{% for message in messages %}
+<div class="rounded px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">{{ message }}</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if acciones %}
+<div class="no-print w-full max-w-3xl bg-white rounded-lg shadow-md p-4 mb-4 text-[#0a192f]">
+<p class="text-sm font-semibold mb-3">Control del viaje</p>
+<div class="flex flex-wrap items-end gap-3">
+{% if "retraso" in acciones %}
+<form method="post" action="{% url 'viajes:control' viaje.pk %}" class="flex items-end gap-2">
+{% csrf_token %}
+<input type="hidden" name="accion" value="retraso"/>
+<label class="text-xs text-gray-600">{{ retraso_form.minutos.label }}
+<input type="number" name="minutos" min="1" max="{{ retraso_form.fields.minutos.max_value }}" required class="block mt-1 w-28 border rounded px-2 py-1.5 text-sm" placeholder="Ej. 30"/>
+</label>
+<button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded">Registrar retraso</button>
+</form>
+{% endif %}
+{% if "salida" in acciones %}
+<form method="post" action="{% url 'viajes:control' viaje.pk %}">
+{% csrf_token %}
+<input type="hidden" name="accion" value="salida"/>
+<button type="submit" class="bg-[#0a192f] hover:bg-[#13294b] text-white text-sm font-semibold px-4 py-2 rounded">Registrar salida</button>
+</form>
+{% endif %}
+{% if "llegada" in acciones %}
+<form method="post" action="{% url 'viajes:control' viaje.pk %}">
+{% csrf_token %}
+<input type="hidden" name="accion" value="llegada"/>
+<button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded">Registrar llegada</button>
+</form>
+{% endif %}
+{% if "cancelar" in acciones %}
+<form method="post" action="{% url 'viajes:control' viaje.pk %}" onsubmit="return confirm('Cancelar este viaje? Los pasajes vendidos no se reembolsan.');">
+{% csrf_token %}
+<input type="hidden" name="accion" value="cancelar"/>
+<button type="submit" class="border border-red-600 text-red-700 hover:bg-red-50 text-sm font-semibold px-4 py-2 rounded">Cancelar viaje</button>
+</form>
+{% endif %}
+</div>
+</div>
+{% endif %}
+
 <div class="hoja w-full max-w-3xl bg-white rounded-lg shadow-md p-6 text-[#0a192f]">
 <div class="flex items-start justify-between border-b pb-4">
 <div>
@@ -38,6 +85,10 @@
 <div><dt class="text-gray-500">Salida programada</dt><dd class="font-semibold">{{ viaje.horario.hora_salida|time:"H:i" }}</dd></div>
 <div><dt class="text-gray-500">Bus</dt><dd class="font-semibold">{{ viaje.bus.placa }} ({{ viaje.bus.nombre_tipo }})</dd></div>
 <div><dt class="text-gray-500">Conductor</dt><dd class="font-semibold">{% if viaje.conductor %}{{ viaje.conductor.usuario }}{% else %}Sin asignar{% endif %}</dd></div>
+{% if viaje.hora_salida_real %}<div><dt class="text-gray-500">Salida real</dt><dd class="font-semibold">{{ viaje.hora_salida_real|date:"d/m/Y H:i" }}</dd></div>{% endif %}
+{% if viaje.hora_llegada_real %}<div><dt class="text-gray-500">Llegada real</dt><dd class="font-semibold">{{ viaje.hora_llegada_real|date:"d/m/Y H:i" }}</dd></div>{% endif %}
+{% if viaje.duracion_real_minutos is not None %}<div><dt class="text-gray-500">Duración real</dt><dd class="font-semibold">{{ viaje.duracion_real_minutos }} min</dd></div>{% endif %}
+{% if viaje.minutos_retraso %}<div><dt class="text-gray-500">Retraso</dt><dd class="font-semibold text-amber-700">{{ viaje.minutos_retraso }} min{% if viaje.estado == "retrasado" %} (estimado){% endif %}</dd></div>{% endif %}
 {% if viaje.ruta.duracion_minutos %}<div><dt class="text-gray-500">Duración estimada</dt><dd class="font-semibold">{{ viaje.ruta.duracion_minutos }} min</dd></div>{% endif %}
 {% if viaje.ruta.distancia_km %}<div><dt class="text-gray-500">Distancia</dt><dd class="font-semibold">{{ viaje.ruta.distancia_km }} km</dd></div>{% endif %}
 </dl>

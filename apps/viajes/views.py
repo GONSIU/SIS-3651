@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView
@@ -17,9 +18,16 @@ class ListaViajesView(RolRequeridoMixin, ListView):
     context_object_name = "viajes"
 
     def get_queryset(self):
+        # Los conteos de asientos se calculan en la misma consulta (GROUP BY) en lugar
+        # de dos count() por viaje: el numero de consultas ya no depende de cuantos
+        # viajes haya.
         return (
             Viaje.objects.select_related(
                 "ruta__origen", "ruta__destino", "bus", "horario", "conductor__usuario"
+            )
+            .annotate(
+                num_asientos=Count("asientos_viaje"),
+                num_vendidos=Count("asientos_viaje", filter=Q(asientos_viaje__estado="vendido")),
             )
             .order_by("-fecha_salida", "horario__hora_salida")[:50]
         )
@@ -27,9 +35,9 @@ class ListaViajesView(RolRequeridoMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         for viaje in context["viajes"]:
-            total = viaje.asientos_viaje.count()
-            vendidos = viaje.asientos_viaje.filter(estado="vendido").count()
-            viaje.ocupacion_texto = f"{vendidos}/{total}" if total else "—"
+            viaje.ocupacion_texto = (
+                f"{viaje.num_vendidos}/{viaje.num_asientos}" if viaje.num_asientos else "—"
+            )
         return context
 
 

@@ -16,6 +16,17 @@ from .models import Usuario
 class LoginUsuarioView(LoginView):
     template_name = "usuarios/login.html"
 
+    # Pagina de inicio por rol cuando no hay ?next=. Los roles que no aparecen van a
+    # LOGIN_REDIRECT_URL (el dashboard). Un ?next= seguro siempre tiene prioridad.
+    INICIO_POR_ROL = {"conductor": "viajes:mis_viajes"}
+
+    def get_default_redirect_url(self) -> str:
+        # LoginView ya llamo a auth_login(): request.user es el usuario que entro.
+        destino = self.INICIO_POR_ROL.get(self.request.user.rol)
+        if destino:
+            return reverse(destino)
+        return super().get_default_redirect_url()
+
 
 class LogoutUsuarioView(LogoutView):
     pass

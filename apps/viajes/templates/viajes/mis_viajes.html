@@ -1,0 +1,51 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Mis Viajes — Trans Naser{% endblock %}
+{% block nav_mis_viajes %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Mis Viajes</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+{% if es_historial %}Viajes que ya realizaste.{% else %}Tus próximas salidas asignadas: ruta, bus y horario.{% endif %}
+</p>
+</div>
+<div class="flex gap-2 self-start">
+<a class="font-label text-label-md px-4 py-2 rounded border {% if not es_historial %}bg-deep-navy text-white border-deep-navy{% else %}border-outline-variant text-on-surface-variant hover:text-deep-navy{% endif %}" href="{% url 'viajes:mis_viajes' %}">Próximos</a>
+<a class="font-label text-label-md px-4 py-2 rounded border {% if es_historial %}bg-deep-navy text-white border-deep-navy{% else %}border-outline-variant text-on-surface-variant hover:text-deep-navy{% endif %}" href="{% url 'viajes:mis_viajes' %}?historial=1">Historial</a>
+</div>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Salida</th><th class="px-5 py-3">Ruta</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for viaje in viajes %}
+<tr>
+<td class="px-5 py-3 font-label">{{ viaje.fecha_salida }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ viaje.ruta.origen }} → {{ viaje.ruta.destino }}</td>
+<td class="px-5 py-3 font-label text-on-surface-variant">{{ viaje.bus.placa }} ({{ viaje.bus.nombre_tipo }})</td>
+<td class="px-5 py-3 font-label">{{ viaje.get_estado_display }}</td>
+<td class="px-5 py-3 text-right">
+<a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:underline" href="{% url 'viajes:hoja_ruta' viaje.pk %}">
+<span class="material-symbols-outlined text-[18px]">description</span>Hoja de ruta
+</a>
+</td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">
+{% if es_historial %}Todavía no tienes viajes realizados.{% else %}No tienes viajes asignados próximamente.{% endif %}
+</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

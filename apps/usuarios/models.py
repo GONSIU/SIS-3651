@@ -31,6 +31,7 @@ class Usuario(AbstractUser):
         ("ventanillero", "Ventanillero"),
         ("supervisor", "Supervisor"),
         ("admin", "Administrador"),
+        ("conductor", "Conductor"),
     ]
     ROLES_CON_TERMINAL = ("ventanillero", "supervisor")
 

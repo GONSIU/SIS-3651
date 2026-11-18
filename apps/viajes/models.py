@@ -19,7 +19,15 @@ class Viaje(models.Model):
     ruta = models.ForeignKey(Ruta, related_name="viajes", on_delete=models.PROTECT)
     horario = models.ForeignKey(Horario, related_name="viajes", on_delete=models.PROTECT)
     bus = models.ForeignKey(Bus, related_name="viajes", on_delete=models.PROTECT)
-    # conductor: se agrega cuando exista apps.personal.Empleado
+    # Opcional para no romper los viajes programados antes de existir el rol conductor.
+    # PROTECT: un conductor con viajes no se borra; se desactiva su usuario.
+    conductor = models.ForeignKey(
+        "personal.Empleado",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="viajes_conducidos",
+    )
     fecha_salida = models.DateField()
     hora_salida_real = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="programado")
@@ -79,6 +87,18 @@ class Viaje(models.Model):
             if self.horario_id and self.fecha_salida and self._bus_ocupado():
                 errores.setdefault("bus", []).append("El bus ya tiene un viaje ese dia a esa hora.")
 
+        if self.conductor_id:
+            if self._conductor_es_nuevo():
+                usuario = self.conductor.usuario
+                if usuario.rol != "conductor":
+                    errores.setdefault("conductor", []).append("El empleado elegido no tiene rol de conductor.")
+                elif not usuario.is_active:
+                    errores.setdefault("conductor", []).append("El conductor elegido esta inactivo.")
+            if self.horario_id and self.fecha_salida and self._conductor_ocupado():
+                errores.setdefault("conductor", []).append(
+                    "El conductor ya tiene un viaje ese dia a esa hora."
+                )
+
         if errores:
             raise ValidationError(errores)
 
@@ -102,6 +122,32 @@ class Viaje(models.Model):
             )
             .exclude(estado="cancelado")
             .exclude(horario_id=self.horario_id)
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+    def _conductor_es_nuevo(self) -> bool:
+        """Indica si el viaje se esta creando o si cambia el conductor guardado.
+
+        Asi un viaje antiguo se puede editar aunque su conductor ya no tenga el rol."""
+        if self._state.adding:
+            return True
+        return Viaje.objects.filter(pk=self.pk).exclude(conductor_id=self.conductor_id).exists()
+
+    def _conductor_ocupado(self) -> bool:
+        """Busca otro viaje no cancelado del mismo conductor ese dia a la misma hora.
+
+        No detecta solapamientos (un viaje largo y otro que sale antes de que termine):
+        ver docs/validaciones.md."""
+        if self.estado == "cancelado":
+            return False
+        return (
+            Viaje.objects.filter(
+                conductor_id=self.conductor_id,
+                fecha_salida=self.fecha_salida,
+                horario__hora_salida=self.horario.hora_salida,
+            )
+            .exclude(estado="cancelado")
             .exclude(pk=self.pk)
             .exists()
         )

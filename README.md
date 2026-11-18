@@ -145,7 +145,7 @@ La aplicación está en **http://localhost:8000**.
 | rutas | Terminales, rutas, horarios |
 | flota | Buses, tipos de bus, asientos |
 | viajes | Viaje programado (ruta + bus + fecha) y disponibilidad de asientos |
-| ventas | Pasajes, pagos, comprobantes, reembolsos |
+| ventas | Pasajes, pagos, comprobantes |
 | encomiendas | Registro y seguimiento de paquetería |
 | incidencias | Alertas, reclamos, tickets de soporte |
 | reportes | Reportes de ventas diarios/semanales/mensuales |

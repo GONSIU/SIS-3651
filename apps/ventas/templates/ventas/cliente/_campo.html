@@ -1,0 +1,6 @@
+<div class="space-y-1.5 {{ clase|default:'' }}">
+<label class="font-label text-label-sm text-on-surface-variant block" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+{{ campo }}
+{% if campo.help_text %}<p class="text-body-sm text-on-surface-variant">{{ campo.help_text }}</p>{% endif %}
+{% for error in campo.errors %}<p class="text-body-sm text-error">{{ error }}</p>{% endfor %}
+</div>

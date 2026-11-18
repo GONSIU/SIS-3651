@@ -11,9 +11,32 @@ CHECKBOX_CLASSES = "h-4 w-4 accent-signal-orange"
 
 
 class RegistroClienteForm(UserCreationForm):
+    """Registro publico de clientes.
+
+    Nombre, apellido y CI son obligatorios aqui (en el modelo siguen siendo opcionales
+    para no romper las cuentas existentes): el CI enlaza los pasajes con la cuenta y el
+    nombre es el que se imprime en el boleto."""
+
+    CAMPOS_OBLIGATORIOS = ("first_name", "last_name", "ci")
+
     class Meta(UserCreationForm.Meta):
         model = Usuario
         fields = ("username", "email", "first_name", "last_name", "telefono", "ci")
+        labels = {
+            "username": "Usuario",
+            "email": "Correo electronico",
+            "first_name": "Nombre",
+            "last_name": "Apellido",
+            "telefono": "Telefono",
+            "ci": "CI",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in self.CAMPOS_OBLIGATORIOS:
+            self.fields[campo].required = True
+        for campo in self.fields.values():
+            campo.widget.attrs.setdefault("class", INPUT_CLASSES)
 
 
 class UsuarioForm(forms.ModelForm):

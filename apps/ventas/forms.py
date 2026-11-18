@@ -13,6 +13,7 @@ from apps.core.validators import (
     validar_telefono,
 )
 from .models import Pago
+from .validators import validar_nit_o_ci
 
 INPUT_CLASSES = "form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm"
 SELECT_CLASSES = INPUT_CLASSES + " bg-white"
@@ -118,3 +119,91 @@ class BuscarViajeForm(forms.Form):
         if datos.get("fecha"):
             viajes = viajes.filter(fecha_salida=datos["fecha"])
         return viajes
+
+
+class ReservaForm(forms.Form):
+    """Datos para reservar online: pasajero, facturacion (opcional), pago y condiciones.
+
+    El viaje, el asiento y el precio no vienen del formulario: la vista los toma de la URL
+    y del viaje, y el servicio los vuelve a validar."""
+
+    METODOS_ONLINE = [opcion for opcion in Pago.METODO_CHOICES if opcion[0] != "efectivo"]
+
+    cliente_nombre = forms.CharField(
+        max_length=100, label="Nombre completo del pasajero",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "autocomplete": "name"}),
+    )
+    cliente_ci = forms.CharField(
+        max_length=12, label="CI del pasajero",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+    cliente_telefono = forms.CharField(
+        max_length=15, label="Telefono del pasajero",
+        help_text="Para avisarte si el viaje se retrasa o se cancela.",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "+591", "autocomplete": "tel"}),
+    )
+    nit = forms.CharField(
+        max_length=18, required=False, label="NIT o CI para la factura",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+    razon_social = forms.CharField(
+        max_length=120, required=False, label="Razon social",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+    monto = forms.DecimalField(
+        max_digits=8, decimal_places=2, label="Monto a pagar ahora (Bs)",
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASSES, "step": "0.01"}),
+    )
+    metodo = forms.ChoiceField(
+        choices=METODOS_ONLINE, label="Metodo de pago",
+        widget=forms.Select(attrs={"class": SELECT_CLASSES}),
+    )
+    referencia = forms.CharField(
+        max_length=100, label="Referencia de la transaccion",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Codigo del QR, tarjeta o transferencia"}),
+    )
+    acepta_condiciones = forms.BooleanField(
+        label="Acepto que el pago no es reembolsable y que, si pago un anticipo, debo pagar el saldo en ventanilla antes del plazo.",
+        error_messages={"required": "Debes aceptar las condiciones para reservar."},
+        widget=forms.CheckboxInput(attrs={"class": "h-4 w-4 accent-signal-orange"}),
+    )
+
+    def __init__(self, *args, precio: Decimal, monto_minimo: Decimal, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.precio = precio
+        self.monto_minimo = monto_minimo
+        self.fields["monto"].min_value = monto_minimo
+        self.fields["monto"].max_value = precio
+        self.fields["monto"].widget.attrs.update({"min": str(monto_minimo), "max": str(precio)})
+        self.fields["monto"].help_text = f"Minimo Bs {monto_minimo} (30 %), maximo Bs {precio} (total)."
+
+    def clean_cliente_nombre(self) -> str:
+        valor = normalizar_espacios(self.cleaned_data["cliente_nombre"])
+        validar_nombre_persona(valor)
+        return valor
+
+    def clean_cliente_ci(self) -> str:
+        valor = normalizar_ci(self.cleaned_data["cliente_ci"])
+        validar_ci(valor)
+        return valor
+
+    def clean_cliente_telefono(self) -> str:
+        valor = normalizar_telefono(self.cleaned_data["cliente_telefono"])
+        validar_telefono(valor)
+        return valor
+
+    def clean_nit(self) -> str:
+        valor = normalizar_ci(self.cleaned_data["nit"])
+        if valor:
+            validar_nit_o_ci(valor)
+        return valor
+
+    def clean_razon_social(self) -> str:
+        return normalizar_espacios(self.cleaned_data["razon_social"])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if bool(cleaned_data.get("nit")) != bool(cleaned_data.get("razon_social")):
+            campo = "razon_social" if cleaned_data.get("nit") else "nit"
+            self.add_error(campo, "Para facturar completa el NIT o CI y la razon social.")
+        return cleaned_data

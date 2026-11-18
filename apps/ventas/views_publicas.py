@@ -54,6 +54,9 @@ class ViajeReservableMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["pisos_asientos"] = mapa_de_asientos(self.object)
+        # Solo un cliente con sesion elige asiento; el resto ve el mapa en modo lectura.
+        usuario = self.request.user
+        context["puede_reservar"] = usuario.is_authenticated and usuario.rol == "cliente"
         return context
 
 

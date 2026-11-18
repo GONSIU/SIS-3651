@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView
@@ -159,19 +160,30 @@ class NuevaVentaView(RolRequeridoMixin, View):
 
 
 class VerBoletoView(RolRequeridoMixin, DetailView):
-    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+    """Boleto (pagado) o comprobante de reserva (con saldo pendiente).
+
+    Un cliente solo ve los pasajes de su cuenta: otro da 404, no 403, para no revelar
+    que existe."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin", "cliente"]
     model = Pasaje
     template_name = "ventas/boleto.html"
     context_object_name = "pasaje"
 
     def get_queryset(self):
-        return Pasaje.objects.select_related(
+        pasajes = Pasaje.objects.select_related(
             "viaje__ruta__origen", "viaje__ruta__destino", "viaje__bus",
             "viaje__horario", "asiento_viaje__asiento", "comprobante", "vendido_por",
-        )
+        ).prefetch_related("pagos")
+        if self.request.user.rol == "cliente":
+            pasajes = pasajes.filter(cliente=self.request.user)
+        return pasajes
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["empresa"] = EMPRESA_FISCAL
-        context["pago"] = self.object.pagos.first()
+        context["pagos"] = list(self.object.pagos.all())
+        context["url_volver"] = reverse(
+            "ventas:mis_pasajes" if self.request.user.rol == "cliente" else "ventas:nueva_venta"
+        )
         return context

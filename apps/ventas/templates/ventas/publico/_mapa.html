@@ -1,2 +1,2 @@
-{% include "ventas/_mapa_asientos.html" with seleccionable=False %}
+{% include "ventas/_mapa_asientos.html" with seleccionable=puede_reservar nombre_campo="asiento" %}
 <p class="font-label text-label-sm text-on-surface-variant mt-2">{{ viaje.num_libres }} de {{ viaje.num_asientos }} libres · actualizado {% now "H:i:s" %}</p>

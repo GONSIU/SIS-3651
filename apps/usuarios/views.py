@@ -1,11 +1,12 @@
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from apps.core.mixins import RolRequeridoMixin
@@ -18,7 +19,7 @@ class LoginUsuarioView(LoginView):
 
     # Pagina de inicio por rol cuando no hay ?next=. Los roles que no aparecen van a
     # LOGIN_REDIRECT_URL (el dashboard). Un ?next= seguro siempre tiene prioridad.
-    INICIO_POR_ROL = {"conductor": "viajes:mis_viajes"}
+    INICIO_POR_ROL = {"conductor": "viajes:mis_viajes", "cliente": "ventas:mis_pasajes"}
 
     def get_default_redirect_url(self) -> str:
         # LoginView ya llamo a auth_login(): request.user es el usuario que entro.
@@ -33,9 +34,33 @@ class LogoutUsuarioView(LogoutView):
 
 
 class RegistroClienteView(CreateView):
+    """Crea la cuenta, inicia sesion y vuelve a ?next= (por ejemplo, el asiento elegido)."""
+
     form_class = RegistroClienteForm
     template_name = "usuarios/registro.html"
-    success_url = reverse_lazy("usuarios:login")
+
+    def _siguiente(self) -> str:
+        siguiente = self.request.POST.get("next") or self.request.GET.get("next") or ""
+        # Misma proteccion que el login contra redirecciones a otros sitios.
+        if url_has_allowed_host_and_scheme(
+            siguiente, allowed_hosts={self.request.get_host()}, require_https=self.request.is_secure()
+        ):
+            return siguiente
+        return ""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["next"] = self._siguiente()
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)
+        messages.success(self.request, "Cuenta creada. Ya puedes reservar.")
+        return response
+
+    def get_success_url(self) -> str:
+        return self._siguiente() or reverse("ventas:mis_pasajes")
 
 
 class ListaUsuariosView(RolRequeridoMixin, ListView):

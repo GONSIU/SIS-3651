@@ -149,6 +149,15 @@ class Pasaje(models.Model):
             return self.cliente.get_full_name() or self.cliente.username
         return "—"
 
+    @property
+    def total_pagado(self) -> Decimal:
+        """Suma de los pagos. Usa pagos.all() para aprovechar prefetch_related en listas."""
+        return sum((pago.monto for pago in self.pagos.all()), Decimal("0"))
+
+    @property
+    def saldo(self) -> Decimal:
+        return max(self.precio - self.total_pagado, Decimal("0"))
+
     def marcar_como_vendido(self):
         """Pasa el asiento asociado a 'vendido' y el pasaje a 'pagado'."""
         self.asiento_viaje.estado = "vendido"

@@ -2,20 +2,27 @@ from datetime import date
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.generic import DetailView
+from django.views.decorators.cache import never_cache
+from django.views.generic import DetailView, ListView
 
 from apps.core.mixins import RolRequeridoMixin
 from apps.viajes.models import Viaje, AsientoViaje
-from .forms import VentaForm
+from .forms import CobrarSaldoForm, VentaForm
 from .models import Pasaje
 from .services import (
+    DatosFacturacion,
     DatosPago,
     DatosPasajero,
     buscar_pasajero_por_ci,
+    cobrar_saldo,
+    reservas_pendientes,
     con_conteo_de_asientos,
     liberar_reservas_vencidas,
     mapa_de_asientos,
@@ -144,6 +151,7 @@ class NuevaVentaView(RolRequeridoMixin, View):
                         metodo=datos["metodo_pago"], monto=datos["precio"], referencia=datos["referencia_externa"]
                     ),
                     vendido_por=request.user,
+                    facturacion=DatosFacturacion(nit=datos["nit"], razon_social=datos["razon_social"]),
                 )
             except ValidationError as error:
                 for mensaje in error.messages:
@@ -187,3 +195,95 @@ class VerBoletoView(RolRequeridoMixin, DetailView):
             "ventas:mis_pasajes" if self.request.user.rol == "cliente" else "ventas:nueva_venta"
         )
         return context
+
+
+class ReservasPendientesView(RolRequeridoMixin, ListView):
+    """Reservas online con saldo por cobrar. ?q= busca por codigo de pasaje o CI."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+    template_name = "ventas/reservas_pendientes.html"
+    context_object_name = "reservas"
+
+    def get_queryset(self):
+        self.consulta = self.request.GET.get("q", "").strip()
+        reservas = reservas_pendientes()
+        if self.consulta:
+            texto = self.consulta.upper().replace(" ", "")
+            reservas = reservas.filter(
+                Q(codigo_pasaje__iexact=self.consulta) | Q(cliente_ci=texto) | Q(cliente__ci=texto)
+            )
+        return reservas
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.consulta
+        return context
+
+
+class CobrarSaldoView(RolRequeridoMixin, View):
+    """Muestra la reserva y cobra el saldo. El monto es el saldo del servidor."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+    template_name = "ventas/cobrar_saldo.html"
+
+    def _reserva(self, pk: int) -> Pasaje:
+        return get_object_or_404(reservas_pendientes(), pk=pk)
+
+    def _render(self, request, reserva: Pasaje, form: CobrarSaldoForm):
+        return render(request, self.template_name, {"reserva": reserva, "form": form})
+
+    def get(self, request, pk: int):
+        reserva = self._reserva(pk)
+        comprobante = getattr(reserva, "comprobante", None)
+        inicial = {"metodo": "efectivo"}
+        if comprobante:
+            inicial.update({"nit": comprobante.nit_cliente, "razon_social": comprobante.razon_social_cliente})
+        return self._render(request, reserva, CobrarSaldoForm(initial=inicial))
+
+    def post(self, request, pk: int):
+        reserva = self._reserva(pk)
+        form = CobrarSaldoForm(request.POST)
+        if form.is_valid():
+            datos = form.cleaned_data
+            try:
+                pasaje = cobrar_saldo(
+                    pasaje_id=reserva.pk,
+                    pago=DatosPago(metodo=datos["metodo"], monto=reserva.saldo, referencia=datos["referencia"]),
+                    cobrado_por=request.user,
+                    facturacion=DatosFacturacion(nit=datos["nit"], razon_social=datos["razon_social"]),
+                )
+            except ValidationError as error:
+                for mensaje in error.messages:
+                    form.add_error(None, mensaje)
+            else:
+                messages.success(request, f"Saldo cobrado. Pasaje {pasaje.codigo_pasaje} pagado.")
+                return redirect("ventas:boleto", pk=pasaje.pk)
+        return self._render(request, reserva, form)
+
+
+@method_decorator(never_cache, name="dispatch")
+class BuscarPasajeroView(RolRequeridoMixin, View):
+    """GET ?ci=... -> JSON con los datos para llenar la venta en ventanilla.
+
+    Solo personal: un cliente no puede consultar a quien pertenece un CI (en la reserva
+    online el nombre se valida sin revelarlo). Es la unica vista JSON del proyecto: la
+    usa el JavaScript del formulario de venta; sin JavaScript sigue el boton Buscar."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+
+    def get(self, request):
+        try:
+            encontrado = buscar_pasajero_por_ci(request.GET.get("ci", ""))
+        except ValidationError:
+            return JsonResponse({"valido": False, "encontrado": False})
+        if encontrado is None:
+            return JsonResponse({"valido": True, "encontrado": False})
+        return JsonResponse(
+            {
+                "valido": True,
+                "encontrado": True,
+                "nombre": encontrado.nombre,
+                "telefono": encontrado.telefono,
+                "tiene_cuenta": encontrado.tiene_cuenta,
+            }
+        )

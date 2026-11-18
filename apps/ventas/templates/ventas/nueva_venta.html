@@ -94,6 +94,7 @@
 <div class="space-y-1.5">
 <label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.cliente_ci.id_for_label }}">CI / Pasaporte</label>
 {{ form.cliente_ci }}
+<p class="text-body-sm text-on-surface-variant hidden" id="aviso-ci" aria-live="polite"></p>
 {% if form.cliente_ci.errors %}<p class="text-body-sm text-error">{{ form.cliente_ci.errors.0 }}</p>{% endif %}
 </div>
 <div class="space-y-1.5">
@@ -110,6 +111,22 @@
 <label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.referencia_externa.id_for_label }}">Referencia de Pago (QR, tarjeta o transferencia)</label>
 {{ form.referencia_externa }}
 {% if form.referencia_externa.errors %}<p class="text-body-sm text-error">{{ form.referencia_externa.errors.0 }}</p>{% endif %}
+</div>
+</div>
+</div>
+<div class="card-panel rounded-lg p-6">
+<h3 class="font-headline text-headline-md text-deep-navy flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-signal-orange">receipt_long</span>Facturación <span class="font-body-sm text-body-sm text-on-surface-variant">(opcional)</span></h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Con NIT o CI y razón social se emite factura; sin ellos, recibo.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.nit.id_for_label }}">NIT o CI</label>
+{{ form.nit }}
+{% if form.nit.errors %}<p class="text-body-sm text-error">{{ form.nit.errors.0 }}</p>{% endif %}
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.razon_social.id_for_label }}">Razón social</label>
+{{ form.razon_social }}
+{% if form.razon_social.errors %}<p class="text-body-sm text-error">{{ form.razon_social.errors.0 }}</p>{% endif %}
 </div>
 </div>
 </div>
@@ -147,4 +164,53 @@
 </div>
 </form>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Al salir del campo CI, busca al pasajero y llena nombre y telefono. Si el CI es de
+// una cuenta, el nombre queda de solo lectura: el servidor guarda igual el nombre
+// registrado. Sin JavaScript sigue funcionando el boton Buscar.
+(function () {
+    const ci = document.getElementById("{{ form.cliente_ci.id_for_label }}");
+    const nombre = document.getElementById("{{ form.cliente_nombre.id_for_label }}");
+    const telefono = document.getElementById("{{ form.telefono.id_for_label }}");
+    const aviso = document.getElementById("aviso-ci");
+    if (!ci || !nombre) return;
+    const url = "{% url 'ventas:buscar_pasajero' %}";
+    let ultimo = "";
+
+    function mostrar(texto) {
+        aviso.textContent = texto;
+        aviso.classList.toggle("hidden", !texto);
+    }
+
+    async function buscar() {
+        const valor = ci.value.trim();
+        if (valor === ultimo) return;
+        ultimo = valor;
+        nombre.readOnly = false;
+        mostrar("");
+        if (!valor) return;
+        try {
+            const respuesta = await fetch(url + "?ci=" + encodeURIComponent(valor), { cache: "no-store" });
+            if (!respuesta.ok) return;
+            const datos = await respuesta.json();
+            if (!datos.encontrado) return;
+            nombre.value = datos.nombre;
+            if (telefono && !telefono.value) telefono.value = datos.telefono || "";
+            if (datos.tiene_cuenta) {
+                nombre.readOnly = true;
+                mostrar("Cliente con cuenta: se usa el nombre registrado.");
+            } else {
+                mostrar("Datos de una venta anterior: revisalos.");
+            }
+        } catch (error) {
+            // Sin conexion: se escribe a mano o se usa el boton Buscar.
+        }
+    }
+    ci.addEventListener("change", buscar);
+    ci.addEventListener("blur", buscar);
+})();
+</script>
 {% endblock %}

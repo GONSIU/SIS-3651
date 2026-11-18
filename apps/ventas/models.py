@@ -180,6 +180,16 @@ class Pago(models.Model):
         max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
     referencia_externa = models.CharField(max_length=100, blank=True)
+    # Quien cobro este pago en ventanilla. Vacio: pago en linea del propio cliente.
+    # Es distinto de Pasaje.vendido_por: cobrar el saldo de una reserva online no
+    # convierte al ventanillero en el vendedor del pasaje.
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pagos_registrados",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -155,7 +155,7 @@ def registrar_venta(
         pasaje.save()
         pasaje.marcar_como_vendido()
 
-        _registrar_pago(pasaje, pago)
+        _registrar_pago(pasaje, pago, registrado_por=vendido_por)
         _emitir_comprobante(pasaje, facturacion)
     return pasaje
 
@@ -178,8 +178,11 @@ def _bloquear_asiento_libre(viaje, asiento_viaje_id: int) -> AsientoViaje:
     return asiento_viaje
 
 
-def _registrar_pago(pasaje: Pasaje, pago: DatosPago) -> Pago:
-    registro = Pago(pasaje=pasaje, metodo=pago.metodo, monto=pago.monto, referencia_externa=pago.referencia)
+def _registrar_pago(pasaje: Pasaje, pago: DatosPago, registrado_por=None) -> Pago:
+    registro = Pago(
+        pasaje=pasaje, metodo=pago.metodo, monto=pago.monto,
+        referencia_externa=pago.referencia, registrado_por=registrado_por,
+    )
     registro.full_clean()
     registro.save()
     return registro
@@ -399,3 +402,74 @@ def cancelar_reserva(pasaje: Pasaje, usuario) -> None:
         pasaje.actualizado_por = usuario
         pasaje.save(update_fields=["estado", "actualizado_por", "updated_at"])
         AsientoViaje.objects.filter(pk=pasaje.asiento_viaje_id, estado="reservado").update(estado="disponible")
+
+
+# --- Cobro del saldo en ventanilla ----------------------------------------------
+
+
+def reservas_pendientes():
+    """Reservas con saldo por cobrar y plazo vigente (antes se liberan las vencidas)."""
+    liberar_reservas_vencidas()
+    return (
+        Pasaje.objects.filter(estado="reservado")
+        .select_related(
+            "viaje__ruta__origen", "viaje__ruta__destino", "viaje__horario",
+            "asiento_viaje__asiento", "cliente", "comprobante",
+        )
+        .prefetch_related("pagos")
+        .order_by("reservado_hasta")
+    )
+
+
+def cobrar_saldo(
+    *,
+    pasaje_id: int,
+    pago: DatosPago,
+    cobrado_por,
+    facturacion: DatosFacturacion | None = None,
+    ahora: datetime | None = None,
+) -> Pasaje:
+    """Cobra el saldo de una reserva: pasaje pagado, asiento vendido, boleto valido.
+
+    El monto es siempre el saldo exacto (pago.monto se ignora si no coincide: se usa el
+    saldo calculado en el servidor). Se bloquea el pasaje para que dos ventanillas no
+    cobren el mismo saldo a la vez. Con facturacion se actualiza el comprobante creado
+    al reservar (factura o recibo)."""
+    ahora = ahora or timezone.now()
+    with transaction.atomic():
+        # of=("self",): bloquea solo la fila del pasaje. El comprobante es un OneToOne
+        # inverso (LEFT OUTER JOIN) y Postgres no permite FOR UPDATE sobre el lado
+        # opcional de un outer join.
+        pasaje = (
+            Pasaje.objects.select_for_update(of=("self",))
+            .select_related("asiento_viaje", "comprobante")
+            .filter(pk=pasaje_id)
+            .first()
+        )
+        if pasaje is None:
+            raise ValidationError("No existe esa reserva.")
+        if pasaje.estado != "reservado":
+            raise ValidationError(f"La reserva {pasaje.codigo_pasaje} ya no esta pendiente ({pasaje.get_estado_display().lower()}).")
+        if pasaje.reservado_hasta and pasaje.reservado_hasta <= ahora:
+            raise ValidationError(
+                f"La reserva vencio el {timezone.localtime(pasaje.reservado_hasta):%d/%m/%Y %H:%M}: el anticipo no se devuelve."
+            )
+        saldo = pasaje.saldo
+        _registrar_pago(
+            pasaje, DatosPago(metodo=pago.metodo, monto=saldo, referencia=pago.referencia), registrado_por=cobrado_por
+        )
+        pasaje.reservado_hasta = None
+        pasaje.actualizado_por = cobrado_por
+        pasaje.save(update_fields=["reservado_hasta", "actualizado_por", "updated_at"])
+        pasaje.marcar_como_vendido()
+
+        if not Comprobante.objects.filter(pasaje=pasaje).exists():
+            _emitir_comprobante(pasaje, facturacion or DatosFacturacion())
+        elif facturacion is not None:
+            comprobante = pasaje.comprobante
+            comprobante.tipo = "factura" if facturacion.es_factura else "recibo"
+            comprobante.nit_cliente = facturacion.nit
+            comprobante.razon_social_cliente = facturacion.razon_social
+            comprobante.full_clean()
+            comprobante.save(update_fields=["tipo", "nit_cliente", "razon_social_cliente"])
+    return pasaje

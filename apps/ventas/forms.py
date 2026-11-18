@@ -19,7 +19,37 @@ INPUT_CLASSES = "form-input-custom w-full border border-outline-variant rounded 
 SELECT_CLASSES = INPUT_CLASSES + " bg-white"
 
 
-class VentaForm(forms.Form):
+class FacturacionMixin(forms.Form):
+    """NIT o CI y razon social opcionales, los dos o ninguno. Lo usan la venta en
+    ventanilla, la reserva online y el cobro del saldo."""
+
+    nit = forms.CharField(
+        max_length=18, required=False, label="NIT o CI para la factura",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+    razon_social = forms.CharField(
+        max_length=120, required=False, label="Razon social",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+
+    def clean_nit(self) -> str:
+        valor = normalizar_ci(self.cleaned_data["nit"])
+        if valor:
+            validar_nit_o_ci(valor)
+        return valor
+
+    def clean_razon_social(self) -> str:
+        return normalizar_espacios(self.cleaned_data["razon_social"])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if bool(cleaned_data.get("nit")) != bool(cleaned_data.get("razon_social")):
+            campo = "razon_social" if cleaned_data.get("nit") else "nit"
+            self.add_error(campo, "Para facturar completa el NIT o CI y la razon social.")
+        return cleaned_data
+
+
+class VentaForm(FacturacionMixin, forms.Form):
     asiento_viaje_id = forms.IntegerField(widget=forms.HiddenInput)
     cliente_nombre = forms.CharField(
         max_length=100,
@@ -121,7 +151,7 @@ class BuscarViajeForm(forms.Form):
         return viajes
 
 
-class ReservaForm(forms.Form):
+class ReservaForm(FacturacionMixin, forms.Form):
     """Datos para reservar online: pasajero, facturacion (opcional), pago y condiciones.
 
     El viaje, el asiento y el precio no vienen del formulario: la vista los toma de la URL
@@ -141,14 +171,6 @@ class ReservaForm(forms.Form):
         max_length=15, label="Telefono del pasajero",
         help_text="Para avisarte si el viaje se retrasa o se cancela.",
         widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "+591", "autocomplete": "tel"}),
-    )
-    nit = forms.CharField(
-        max_length=18, required=False, label="NIT o CI para la factura",
-        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
-    )
-    razon_social = forms.CharField(
-        max_length=120, required=False, label="Razon social",
-        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
     )
     monto = forms.DecimalField(
         max_digits=8, decimal_places=2, label="Monto a pagar ahora (Bs)",
@@ -192,18 +214,22 @@ class ReservaForm(forms.Form):
         validar_telefono(valor)
         return valor
 
-    def clean_nit(self) -> str:
-        valor = normalizar_ci(self.cleaned_data["nit"])
-        if valor:
-            validar_nit_o_ci(valor)
-        return valor
 
-    def clean_razon_social(self) -> str:
-        return normalizar_espacios(self.cleaned_data["razon_social"])
+class CobrarSaldoForm(FacturacionMixin, forms.Form):
+    """Cobro del saldo de una reserva. El monto no se escribe: es el saldo del servidor."""
+
+    metodo = forms.ChoiceField(
+        choices=Pago.METODO_CHOICES, label="Metodo de pago",
+        widget=forms.Select(attrs={"class": SELECT_CLASSES}),
+    )
+    referencia = forms.CharField(
+        max_length=100, required=False, label="Referencia (QR, tarjeta o transferencia)",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
 
     def clean(self):
         cleaned_data = super().clean()
-        if bool(cleaned_data.get("nit")) != bool(cleaned_data.get("razon_social")):
-            campo = "razon_social" if cleaned_data.get("nit") else "nit"
-            self.add_error(campo, "Para facturar completa el NIT o CI y la razon social.")
+        metodo = cleaned_data.get("metodo")
+        if metodo and metodo != "efectivo" and not cleaned_data.get("referencia"):
+            self.add_error("referencia", "Este metodo de pago necesita una referencia.")
         return cleaned_data

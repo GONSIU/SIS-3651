@@ -1,0 +1,45 @@
+{% extends "base_publico.html" %}
+{% load core_extras %}
+
+{% block title %}Mis pasajes — Trans Naser{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Mis pasajes</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Tus reservas en línea y los pasajes comprados en ventanilla con tu CI.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 self-start" href="{% url 'ventas:buscar_viajes' %}"><span class="material-symbols-outlined text-[18px]">search</span>Buscar viajes</a>
+</div>
+
+<div class="space-y-4">
+{% for pasaje in pasajes %}
+<article class="card-panel rounded-lg p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="space-y-1">
+<p class="font-label text-label-md text-deep-navy">{{ pasaje.viaje.ruta.origen.ciudad }} → {{ pasaje.viaje.ruta.destino.ciudad }}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">{{ pasaje.viaje.fecha_salida|date:"d/m/Y" }} · {{ pasaje.viaje.horario.hora_salida|time:"H:i" }} · asiento {{ pasaje.asiento_viaje.asiento.numero }} · {{ pasaje.nombre_pasajero }}</p>
+<p class="font-body-sm text-body-sm"><span class="mono">{{ pasaje.codigo_pasaje }}</span> · pagado {{ pasaje.total_pagado|moneda }} de {{ pasaje.precio|moneda }}</p>
+{% if pasaje.estado == "reservado" %}
+<p class="font-body-sm text-body-sm text-amber-700">Saldo {{ pasaje.saldo|moneda }}: págalo en ventanilla antes del {{ pasaje.reservado_hasta|date:"d/m/Y H:i" }}.</p>
+{% endif %}
+</div>
+<div class="flex flex-wrap items-center gap-3">
+{% if pasaje.estado == "pagado" %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">PAGADO</span>
+{% elif pasaje.estado == "reservado" %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">RESERVADO</span>
+{% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-on-surface-variant">{{ pasaje.get_estado_display|upper }}</span>{% endif %}
+{% if pasaje.estado == "pagado" or pasaje.estado == "reservado" or pasaje.estado == "usado" %}
+<a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:text-signal-orange" href="{% url 'ventas:boleto' pasaje.pk %}"><span class="material-symbols-outlined text-[18px]">receipt_long</span>{% if pasaje.estado == "reservado" %}Comprobante{% else %}Boleto{% endif %}</a>
+{% endif %}
+{% if pasaje.estado == "reservado" %}
+<form method="post" action="{% url 'ventas:cancelar_reserva' pasaje.pk %}" onsubmit="return confirm('Cancelar la reserva? El anticipo pagado no se devuelve.');">
+{% csrf_token %}
+<button class="font-label text-label-md text-red-700 hover:text-red-900" type="submit">Cancelar</button>
+</form>
+{% endif %}
+</div>
+</article>
+{% empty %}
+<div class="card-panel rounded-lg p-6 text-center text-on-surface-variant">Todavía no tienes pasajes. <a class="text-deep-navy underline" href="{% url 'ventas:buscar_viajes' %}">Busca un viaje</a>.</div>
+{% endfor %}
+</div>
+{% endblock %}

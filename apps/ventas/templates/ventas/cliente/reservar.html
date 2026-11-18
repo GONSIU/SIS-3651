@@ -1,0 +1,101 @@
+{% extends "base_publico.html" %}
+{% load core_extras %}
+
+{% block title %}Reservar asiento — Trans Naser{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'ventas:viaje_publico' viaje.pk %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reservar asiento {{ asiento.asiento.numero }}</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ viaje.ruta.origen.ciudad }} → {{ viaje.ruta.destino.ciudad }} · {{ viaje.fecha_salida|date:"d/m/Y" }} · salida {{ viaje.horario.hora_salida|time:"H:i" }}</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+{% endif %}
+
+<form method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+{% csrf_token %}
+<input type="hidden" name="asiento" value="{{ asiento.pk }}"/>
+
+<div class="lg:col-span-2 space-y-6">
+<section class="card-panel rounded-lg p-5 space-y-4">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<h2 class="font-headline text-headline-md text-deep-navy">Pasajero</h2>
+<div class="flex gap-2">
+<button class="font-label text-label-sm border border-outline-variant rounded px-3 py-1.5 hover:text-deep-navy" type="button" id="soy-yo"
+ data-nombre="{{ cuenta.get_full_name }}" data-ci="{{ cuenta.ci|default:'' }}" data-telefono="{{ cuenta.telefono }}">El pasajero soy yo</button>
+<button class="font-label text-label-sm border border-outline-variant rounded px-3 py-1.5 hover:text-deep-navy" type="button" id="otra-persona">Es otra persona</button>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Estos datos van impresos en el boleto. Si el CI pertenece a una cuenta registrada, el nombre debe coincidir con el de esa cuenta.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.cliente_nombre clase="md:col-span-2" %}
+{% include "ventas/cliente/_campo.html" with campo=form.cliente_ci %}
+{% include "ventas/cliente/_campo.html" with campo=form.cliente_telefono %}
+</div>
+</section>
+
+<section class="card-panel rounded-lg p-5 space-y-4">
+<h2 class="font-headline text-headline-md text-deep-navy">Facturación <span class="font-body-sm text-body-sm text-on-surface-variant">(opcional)</span></h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Con NIT o CI y razón social se emite factura; sin ellos, recibo.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.nit %}
+{% include "ventas/cliente/_campo.html" with campo=form.razon_social %}
+</div>
+</section>
+
+<section class="card-panel rounded-lg p-5 space-y-4">
+<h2 class="font-headline text-headline-md text-deep-navy">Pago</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.monto %}
+{% include "ventas/cliente/_campo.html" with campo=form.metodo %}
+{% include "ventas/cliente/_campo.html" with campo=form.referencia clase="md:col-span-2" %}
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Pago simulado con fines académicos: el sistema acepta la referencia sin verificarla con un banco.</p>
+</section>
+</div>
+
+<aside class="card-panel rounded-lg p-5 space-y-4 self-start">
+<h2 class="font-headline text-headline-md text-deep-navy">Resumen</h2>
+<dl class="space-y-2 font-body-sm text-body-sm">
+<div class="flex justify-between"><dt class="text-on-surface-variant">Asiento</dt><dd class="font-label text-deep-navy">{{ asiento.asiento.numero }}</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Bus</dt><dd class="font-label text-deep-navy">{{ viaje.bus.nombre_tipo }}</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Precio</dt><dd class="font-label text-deep-navy">{{ precio|moneda }}</dd></div>
+<div class="flex justify-between"><dt class="text-on-surface-variant">Anticipo mínimo</dt><dd class="font-label text-deep-navy">{{ monto_minimo|moneda }}</dd></div>
+</dl>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Si pagas menos del total, paga el saldo en ventanilla antes del <strong>{{ reservado_hasta|date:"d/m/Y H:i" }}</strong>. Pasado ese plazo la reserva vence, el asiento se libera y el anticipo no se devuelve.</p>
+<div class="flex items-start gap-2">
+{{ form.acepta_condiciones }}
+<label class="font-body-sm text-body-sm" for="{{ form.acepta_condiciones.id_for_label }}">{{ form.acepta_condiciones.label }}</label>
+</div>
+{% for error in form.acepta_condiciones.errors %}<p class="text-body-sm text-error">{{ error }}</p>{% endfor %}
+<button class="w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">check_circle</span>Confirmar reserva</button>
+</aside>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Rellena o limpia los datos del pasajero. Solo usa los datos de la propia cuenta.
+(function () {
+    const campos = {
+        nombre: document.getElementById("{{ form.cliente_nombre.id_for_label }}"),
+        ci: document.getElementById("{{ form.cliente_ci.id_for_label }}"),
+        telefono: document.getElementById("{{ form.cliente_telefono.id_for_label }}"),
+    };
+    const soyYo = document.getElementById("soy-yo");
+    soyYo.addEventListener("click", function () {
+        campos.nombre.value = soyYo.dataset.nombre;
+        campos.ci.value = soyYo.dataset.ci;
+        campos.telefono.value = soyYo.dataset.telefono;
+    });
+    document.getElementById("otra-persona").addEventListener("click", function () {
+        Object.values(campos).forEach(function (campo) { campo.value = ""; });
+        campos.nombre.focus();
+    });
+})();
+</script>
+{% endblock %}

@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from django.utils import timezone
 from apps.viajes.models import Viaje, AsientoViaje
+from .validators import validar_nit_o_ci
 from apps.core.utils import generar_codigo
 from apps.core.validators import (
     normalizar_ci,
@@ -28,13 +29,19 @@ class Pasaje(models.Model):
         ("reservado", "Reservado"),
         ("pagado", "Pagado"),
         ("cancelado", "Cancelado"),
+        ("vencido", "Vencido"),
         ("usado", "Usado"),
     ]
+    # Un asiento solo puede tener un pasaje en estos estados a la vez. Un pasaje
+    # cancelado o vencido ya no ocupa el asiento y se puede volver a vender.
+    ESTADOS_ACTIVOS = ("reservado", "pagado", "usado")
 
     codigo_pasaje = models.CharField(max_length=20, unique=True, blank=True)
     viaje = models.ForeignKey(Viaje, related_name="pasajes", on_delete=models.PROTECT)
-    asiento_viaje = models.OneToOneField(
-        AsientoViaje, related_name="pasaje", on_delete=models.PROTECT
+    # ForeignKey y no OneToOne: un asiento puede tener historial (una reserva vencida y
+    # luego una venta). La unicidad entre pasajes activos la da uniq_pasaje_activo_por_asiento.
+    asiento_viaje = models.ForeignKey(
+        AsientoViaje, related_name="pasajes", on_delete=models.PROTECT
     )
     cliente = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -66,12 +73,21 @@ class Pasaje(models.Model):
         max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="reservado")
+    # Solo reservas sin pagar por completo: pasada esta hora, liberar_reservas_vencidas()
+    # las pasa a "vencido" y libera el asiento.
+    reservado_hasta = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
         constraints = [
+            models.UniqueConstraint(
+                fields=["asiento_viaje"],
+                condition=Q(estado__in=["reservado", "pagado", "usado"]),
+                name="uniq_pasaje_activo_por_asiento",
+                violation_error_message="Ese asiento ya tiene un pasaje activo.",
+            ),
             models.CheckConstraint(
                 check=Q(precio__gt=0),
                 name="pasaje_precio_positivo",
@@ -125,9 +141,22 @@ class Pasaje(models.Model):
 
     @property
     def nombre_pasajero(self):
+        """Quien viaja. cliente es la cuenta que compro, que puede ser otra persona
+        (por ejemplo, un familiar): por eso manda cliente_nombre."""
+        if self.cliente_nombre:
+            return self.cliente_nombre
         if self.cliente_id:
             return self.cliente.get_full_name() or self.cliente.username
-        return self.cliente_nombre or "—"
+        return "—"
+
+    @property
+    def total_pagado(self) -> Decimal:
+        """Suma de los pagos. Usa pagos.all() para aprovechar prefetch_related en listas."""
+        return sum((pago.monto for pago in self.pagos.all()), Decimal("0"))
+
+    @property
+    def saldo(self) -> Decimal:
+        return max(self.precio - self.total_pagado, Decimal("0"))
 
     def marcar_como_vendido(self):
         """Pasa el asiento asociado a 'vendido' y el pasaje a 'pagado'."""
@@ -151,6 +180,16 @@ class Pago(models.Model):
         max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
     referencia_externa = models.CharField(max_length=100, blank=True)
+    # Quien cobro este pago en ventanilla. Vacio: pago en linea del propio cliente.
+    # Es distinto de Pasaje.vendido_por: cobrar el saldo de una reserva online no
+    # convierte al ventanillero en el vendedor del pasaje.
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pagos_registrados",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -197,8 +236,21 @@ class Comprobante(models.Model):
     # Dato fiscal ficticio (no proviene de Impuestos Nacionales): solo para que el
     # boleto impreso se vea como una factura real. Se genera solo, no se captura.
     codigo_control = models.CharField(max_length=40, blank=True)
+    # Datos de facturacion del comprador (opcionales). Con NIT el comprobante es factura;
+    # sin NIT, recibo. registrar_venta() decide el tipo.
+    nit_cliente = models.CharField(max_length=18, blank=True, validators=[validar_nit_o_ci])
+    razon_social_cliente = models.CharField(max_length=120, blank=True)
     archivo_pdf = models.FileField(upload_to="comprobantes/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=Q(tipo="recibo") | (~Q(nit_cliente="") & ~Q(razon_social_cliente="")),
+                name="comprobante_factura_con_nit",
+                violation_error_message="Una factura necesita NIT o CI y razon social.",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.numero_comprobante:
@@ -210,4 +262,17 @@ class Comprobante(models.Model):
 
     def __str__(self):
         return f"{self.numero_comprobante} ({self.pasaje.codigo_pasaje})"
+
+    def clean_fields(self, exclude=None):
+        self.nit_cliente = normalizar_ci(self.nit_cliente)
+        self.razon_social_cliente = normalizar_espacios(self.razon_social_cliente)
+        super().clean_fields(exclude=exclude)
+
+    def clean(self):
+        super().clean()
+        if bool(self.nit_cliente) != bool(self.razon_social_cliente):
+            campo = "razon_social_cliente" if self.nit_cliente else "nit_cliente"
+            raise ValidationError({campo: "Para facturar se necesitan el NIT o CI y la razon social."})
+        if self.tipo == "factura" and not self.nit_cliente:
+            raise ValidationError({"tipo": "Una factura necesita NIT o CI y razon social."})
     

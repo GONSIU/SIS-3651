@@ -1,0 +1,56 @@
+{% extends "base_publico.html" %}
+{% load core_extras %}
+
+{% block title %}Buscar viajes — Trans Naser{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Buscar viajes</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Consulta horarios y asientos libres. La reserva por internet cierra {{ horas_cierre }} hora(s) antes de la salida; después, compra en ventanilla.</p>
+</div>
+
+<form method="get" class="card-panel rounded-lg p-4 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+<div class="space-y-1.5">
+<label class="font-label text-label-sm text-on-surface-variant" for="{{ form.origen.id_for_label }}">Origen</label>
+{{ form.origen }}
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-sm text-on-surface-variant" for="{{ form.destino.id_for_label }}">Destino</label>
+{{ form.destino }}
+</div>
+<div class="space-y-1.5">
+<label class="font-label text-label-sm text-on-surface-variant" for="{{ form.fecha.id_for_label }}">Fecha</label>
+{{ form.fecha }}
+{% if form.fecha.errors %}<p class="text-body-sm text-error">{{ form.fecha.errors.0 }}</p>{% endif %}
+</div>
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center justify-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">search</span>Buscar</button>
+</form>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Origen</th><th class="px-5 py-3">Destino</th><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Salida</th><th class="px-5 py-3">Bus</th><th class="px-5 py-3">Precio</th><th class="px-5 py-3">Libres</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for viaje in viajes %}
+<tr>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ viaje.ruta.origen.ciudad }}</td>
+<td class="px-5 py-3">{{ viaje.ruta.destino.ciudad }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.fecha_salida|date:"d/m/Y" }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3">{{ viaje.bus.nombre_tipo }}</td>
+<td class="px-5 py-3 font-label">{{ viaje.ruta.precio_base|moneda }}</td>
+<td class="px-5 py-3 font-label">{% if viaje.num_libres %}{{ viaje.num_libres }} de {{ viaje.num_asientos }}{% else %}<span class="text-error">Agotado</span>{% endif %}</td>
+<td class="px-5 py-3 text-right"><a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:text-signal-orange" href="{% url 'ventas:viaje_publico' viaje.pk %}"><span class="material-symbols-outlined text-[18px]">airline_seat_recline_normal</span>Ver asientos</a></td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center text-on-surface-variant" colspan="8">No hay viajes disponibles para reservar con esos datos.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

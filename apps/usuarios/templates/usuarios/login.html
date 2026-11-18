@@ -121,6 +121,10 @@
 Iniciar Sesión<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 </button>
 </form>
+<div class="mt-6 text-center space-y-2 font-body-sm text-body-sm">
+<a class="inline-flex items-center gap-1 text-deep-navy hover:text-signal-orange" href="{% url 'ventas:buscar_viajes' %}"><span class="material-symbols-outlined text-[18px]">search</span>Consultar viajes y asientos sin iniciar sesión</a>
+<p class="text-on-surface-variant">¿No tienes cuenta? <a class="text-deep-navy underline" href="{% url 'usuarios:registro' %}">Regístrate</a></p>
+</div>
 <div class="mt-8 pt-6 border-t border-surface-container-highest text-center">
 <p class="font-label text-label-sm text-on-surface-variant">Sistema de Gestion Logistica Segura v1.0</p>
 </div>

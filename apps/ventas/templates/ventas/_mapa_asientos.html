@@ -1,0 +1,40 @@
+{% comment %}
+Mapa de asientos compartido por la venta en ventanilla y la consulta publica.
+Variables: pisos_asientos (services.mapa_de_asientos), seleccionable (radio para elegir)
+y nombre_campo (nombre del radio; por defecto asiento_viaje_id).
+Solo usa el numero y el estado de cada asiento: nunca datos del pasajero, porque la
+version publica lo muestra sin sesion.
+{% endcomment %}
+<div class="bg-surface-container-low rounded-lg p-4 space-y-6">
+{% for piso_num, filas in pisos_asientos %}
+<div>
+{% if pisos_asientos|length > 1 %}<p class="font-label text-label-sm text-on-surface-variant uppercase mb-2">Piso {{ piso_num }}</p>{% endif %}
+<div class="flex justify-end mb-2"><span class="material-symbols-outlined text-deep-navy bg-white rounded-full p-1.5 border border-outline-variant text-[18px]">airline_seat_recline_extra</span></div>
+<div class="space-y-2">
+{% for fila in filas %}
+<div class="flex items-center gap-2">
+{% for av in fila %}
+{% if forloop.counter == 3 %}<div class="w-5"></div>{% endif %}
+{% if av %}
+<div class="relative w-11 h-10">
+{% if av.estado == "disponible" and seleccionable %}
+<input class="peer sr-only" id="seat-{{ av.id }}" name="{{ nombre_campo|default:'asiento_viaje_id' }}" type="radio" value="{{ av.id }}" required/>
+<label class="seat-btn seat-free peer-checked:!bg-signal-orange peer-checked:!text-white peer-checked:!border-signal-orange rounded-md w-11 h-10 flex items-center justify-center font-label text-label-sm cursor-pointer" for="seat-{{ av.id }}">{{ av.asiento.numero }}</label>
+{% elif av.estado == "disponible" %}
+<span class="seat-btn seat-free rounded-md w-11 h-10 flex items-center justify-center font-label text-label-sm" title="Libre">{{ av.asiento.numero }}</span>
+{% else %}
+<span title="Ocupado" class="seat-btn seat-taken rounded-md w-11 h-10 flex items-center justify-center font-label text-label-sm">{{ av.asiento.numero }}</span>
+{% endif %}
+</div>
+{% else %}
+<div class="w-11 h-10"></div>
+{% endif %}
+{% endfor %}
+</div>
+{% endfor %}
+</div>
+</div>
+{% empty %}
+<p class="text-body-sm text-on-surface-variant">Este viaje todavía no tiene asientos generados.</p>
+{% endfor %}
+</div>

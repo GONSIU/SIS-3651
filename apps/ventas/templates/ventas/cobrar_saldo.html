@@ -1,0 +1,51 @@
+{% extends "base_dashboard.html" %}
+{% load core_extras %}
+
+{% block title %}Cobrar saldo {{ reserva.codigo_pasaje }} — Trans Naser{% endblock %}
+{% block nav_reservas %}active{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3">
+<a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'ventas:reservas_pendientes' %}"><span class="material-symbols-outlined">arrow_back</span></a>
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Cobrar saldo</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mono">{{ reserva.codigo_pasaje }}</p>
+</div>
+</div>
+
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3 max-w-3xl">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl">
+<div class="card-panel rounded-lg p-5 space-y-2 font-body-sm text-body-sm">
+<h2 class="font-headline text-headline-md text-deep-navy mb-2">Reserva</h2>
+<p><span class="text-on-surface-variant">Pasajero:</span> {{ reserva.nombre_pasajero }} <span class="mono">({{ reserva.cliente_ci }})</span></p>
+<p><span class="text-on-surface-variant">Viaje:</span> {{ reserva.viaje.ruta.origen.ciudad }} → {{ reserva.viaje.ruta.destino.ciudad }}, {{ reserva.viaje.fecha_salida|date:"d/m/Y" }} {{ reserva.viaje.horario.hora_salida|time:"H:i" }}</p>
+<p><span class="text-on-surface-variant">Asiento:</span> {{ reserva.asiento_viaje.asiento.numero }}</p>
+<p><span class="text-on-surface-variant">Vence:</span> {{ reserva.reservado_hasta|date:"d/m/Y H:i" }}</p>
+<div class="pt-2 border-t border-surface-container-highest space-y-1">
+{% for pago in reserva.pagos.all %}<p class="flex justify-between"><span>Anticipo {{ pago.get_metodo_display }}</span><span class="font-label">{{ pago.monto|moneda }}</span></p>{% endfor %}
+<p class="flex justify-between"><span>Precio</span><span class="font-label">{{ reserva.precio|moneda }}</span></p>
+<p class="flex justify-between font-bold text-deep-navy"><span>Saldo a cobrar</span><span>{{ reserva.saldo|moneda }}</span></p>
+</div>
+</div>
+
+<form method="post" class="lg:col-span-2 card-panel rounded-lg p-5 space-y-5">
+{% csrf_token %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.metodo %}
+{% include "ventas/cliente/_campo.html" with campo=form.referencia %}
+</div>
+<div>
+<h3 class="font-label text-label-md text-deep-navy uppercase mb-2">Facturación (opcional)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-3">Se precargan los datos que dio el cliente al reservar. Con NIT y razón social se emite factura; sin ellos, recibo.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% include "ventas/cliente/_campo.html" with campo=form.nit %}
+{% include "ventas/cliente/_campo.html" with campo=form.razon_social %}
+</div>
+</div>
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded flex items-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">check_circle</span>Cobrar {{ reserva.saldo|moneda }} y emitir boleto</button>
+</form>
+</div>
+{% endblock %}

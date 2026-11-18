@@ -44,10 +44,22 @@ class VentasPermisosTests(ComprobarPermisosMixin, VentasTestCase):
         )
 
     def test_permisos(self):
-        self.comprobar_get(
-            [reverse("ventas:nueva_venta"), reverse("ventas:boleto", kwargs={"pk": self.pasaje.pk})],
-            {"ventanillero", "supervisor", "admin"},
-        )
+        self.comprobar_get([reverse("ventas:nueva_venta")], {"ventanillero", "supervisor", "admin"})
+
+    def test_boleto_cliente_solo_ve_los_suyos(self):
+        # El cliente entra a la vista (ve sus pasajes) pero uno ajeno da 404, no 403.
+        url = reverse("ventas:boleto", kwargs={"pk": self.pasaje.pk})
+        esperado = {"ventanillero": 200, "supervisor": 200, "admin": 200, "cliente": 404, "conductor": 403}
+        for rol, usuario in self.usuarios.items():
+            with self.subTest(rol=rol):
+                self.client.force_login(usuario)
+                self.assertEqual(self.client.get(url).status_code, esperado[rol])
+        Pasaje.objects.filter(pk=self.pasaje.pk).update(cliente=self.usuarios["cliente"])
+        self.client.force_login(self.usuarios["cliente"])
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_vistas_del_cliente(self):
+        self.comprobar_get([reverse("ventas:mis_pasajes")], {"cliente"})
 
     def test_post_de_venta_sin_rol_no_vende(self):
         self.client.force_login(self.usuarios["cliente"])

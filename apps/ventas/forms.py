@@ -233,3 +233,32 @@ class CobrarSaldoForm(FacturacionMixin, forms.Form):
         if metodo and metodo != "efectivo" and not cleaned_data.get("referencia"):
             self.add_error("referencia", "Este metodo de pago necesita una referencia.")
         return cleaned_data
+
+
+class ReprogramarForm(FacturacionMixin, forms.Form):
+    """Asiento del viaje nuevo, su precio y el pago del cargo (y la diferencia).
+
+    El monto no se escribe: lo calcula el servidor con calcular_reprogramacion()."""
+
+    asiento_viaje_id = forms.IntegerField(
+        widget=forms.HiddenInput, error_messages={"required": "Elige un asiento en el mapa."}
+    )
+    precio = forms.DecimalField(
+        max_digits=8, decimal_places=2, min_value=Decimal("0.01"), label="Precio del viaje nuevo (Bs)",
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASSES, "step": "0.01"}),
+    )
+    metodo_pago = forms.ChoiceField(
+        choices=Pago.METODO_CHOICES, label="Metodo de pago",
+        widget=forms.Select(attrs={"class": SELECT_CLASSES}),
+    )
+    referencia = forms.CharField(
+        max_length=100, required=False, label="Referencia (QR, tarjeta o transferencia)",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        metodo = cleaned_data.get("metodo_pago")
+        if metodo and metodo != "efectivo" and not cleaned_data.get("referencia"):
+            self.add_error("referencia", "Este metodo de pago necesita una referencia.")
+        return cleaned_data

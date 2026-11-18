@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 from apps.viajes.models import Viaje, AsientoViaje
 from .validators import validar_nit_o_ci
@@ -82,6 +82,19 @@ class Pasaje(models.Model):
     # Lo marca el conductor en la hoja de ruta antes de salir. Al registrar la salida,
     # los pagados con abordo pasan a "usado" y los demas a "no_show".
     abordo = models.BooleanField(default=False)
+    # Reprogramacion (solo de un pasaje no_show y una sola vez: OneToOne). El pasaje
+    # nuevo apunta al original; el original queda "reprogramado" y no se edita.
+    reprogramado_de = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reprogramado_en"
+    )
+    # precio = precio del viaje nuevo + cargo_reprogramacion. Lo pagado en el original
+    # entra como credito_reprogramacion, que descuenta del saldo pero no es un Pago.
+    cargo_reprogramacion = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
+    )
+    credito_reprogramacion = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -93,6 +106,12 @@ class Pasaje(models.Model):
                 condition=Q(estado__in=["reservado", "pagado", "usado"]),
                 name="uniq_pasaje_activo_por_asiento",
                 violation_error_message="Ese asiento ya tiene un pasaje activo.",
+            ),
+            models.CheckConstraint(
+                check=Q(cargo_reprogramacion__gte=0, credito_reprogramacion__gte=0)
+                & Q(credito_reprogramacion__lte=F("precio") - F("cargo_reprogramacion")),
+                name="pasaje_reprogramacion_coherente",
+                violation_error_message="El credito no puede cubrir el cargo de reprogramacion.",
             ),
             models.CheckConstraint(
                 check=Q(precio__gt=0),
@@ -162,7 +181,11 @@ class Pasaje(models.Model):
 
     @property
     def saldo(self) -> Decimal:
-        return max(self.precio - self.total_pagado, Decimal("0"))
+        return max(self.precio - self.credito_reprogramacion - self.total_pagado, Decimal("0"))
+
+    @property
+    def precio_sin_cargo(self) -> Decimal:
+        return self.precio - self.cargo_reprogramacion
 
     def marcar_como_vendido(self):
         """Pasa el asiento asociado a 'vendido' y el pasaje a 'pagado'."""
@@ -223,8 +246,9 @@ class Pago(models.Model):
                 self.pasaje.pagos.exclude(pk=self.pk).aggregate(total=Sum("monto"))["total"]
                 or Decimal("0")
             )
-            if pagado + self.monto > self.pasaje.precio:
-                errores["monto"] = f"Los pagos superan el precio del pasaje (Bs {self.pasaje.precio})."
+            por_pagar = self.pasaje.precio - self.pasaje.credito_reprogramacion
+            if pagado + self.monto > por_pagar:
+                errores["monto"] = f"Los pagos superan lo que falta pagar del pasaje (Bs {por_pagar})."
 
         if errores:
             raise ValidationError(errores)

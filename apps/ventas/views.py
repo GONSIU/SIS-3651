@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -6,7 +7,6 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
@@ -14,19 +14,24 @@ from django.views.generic import DetailView, ListView
 
 from apps.core.mixins import RolRequeridoMixin
 from apps.viajes.models import Viaje, AsientoViaje
-from .forms import CobrarSaldoForm, VentaForm
+from .forms import CobrarSaldoForm, ReprogramarForm, VentaForm
 from .models import Pasaje
 from .services import (
     DatosFacturacion,
     DatosPago,
     DatosPasajero,
+    PLAZO_REPROGRAMACION,
     buscar_pasajero_por_ci,
+    calcular_reprogramacion,
     cobrar_saldo,
+    motivo_no_reprogramable,
+    pasajes_reprogramables,
+    reprogramar_pasaje,
     reservas_pendientes,
-    con_conteo_de_asientos,
     liberar_reservas_vencidas,
     mapa_de_asientos,
     registrar_venta,
+    viajes_vendibles,
 )
 
 # Datos del emisor: fijos para toda la empresa (no hay multi-sucursal en el
@@ -57,19 +62,7 @@ class NuevaVentaView(RolRequeridoMixin, View):
             return None, True
 
     def _viajes_disponibles(self, fecha: date | None = None):
-        hoy = timezone.localdate()
-        viajes = (
-            Viaje.objects.filter(fecha_salida__gte=hoy)
-            .exclude(estado__in=Viaje.ESTADOS_SIN_VENTA)
-            .select_related("ruta__origen", "ruta__destino", "bus", "horario")
-            .order_by("fecha_salida", "horario__hora_salida")
-        )
-        # Conteos en la misma consulta: antes la plantilla hacia un count() por fila
-        # y mostraba el total de asientos como si fueran los libres.
-        viajes = con_conteo_de_asientos(viajes)
-        if fecha:
-            viajes = viajes.filter(fecha_salida=fecha)
-        return viajes
+        return viajes_vendibles(fecha)
 
     def _busqueda_por_ci(self, request) -> dict:
         """?ci_buscar=... precarga los datos del pasajero. No guarda nada."""
@@ -181,7 +174,7 @@ class VerBoletoView(RolRequeridoMixin, DetailView):
     def get_queryset(self):
         pasajes = Pasaje.objects.select_related(
             "viaje__ruta__origen", "viaje__ruta__destino", "viaje__bus",
-            "viaje__horario", "asiento_viaje__asiento", "comprobante", "vendido_por",
+            "viaje__horario", "asiento_viaje__asiento", "comprobante", "vendido_por", "reprogramado_de",
         ).prefetch_related("pagos")
         if self.request.user.rol == "cliente":
             pasajes = pasajes.filter(cliente=self.request.user)
@@ -206,13 +199,7 @@ class ReservasPendientesView(RolRequeridoMixin, ListView):
 
     def get_queryset(self):
         self.consulta = self.request.GET.get("q", "").strip()
-        reservas = reservas_pendientes()
-        if self.consulta:
-            texto = self.consulta.upper().replace(" ", "")
-            reservas = reservas.filter(
-                Q(codigo_pasaje__iexact=self.consulta) | Q(cliente_ci=texto) | Q(cliente__ci=texto)
-            )
-        return reservas
+        return _filtrar_por_codigo_o_ci(reservas_pendientes(), self.consulta)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -287,3 +274,107 @@ class BuscarPasajeroView(RolRequeridoMixin, View):
                 "tiene_cuenta": encontrado.tiene_cuenta,
             }
         )
+
+
+def _filtrar_por_codigo_o_ci(pasajes, consulta: str):
+    """Busca por codigo de pasaje (sin distinguir mayusculas) o por CI del pasajero o de la cuenta."""
+    if not consulta:
+        return pasajes
+    texto = consulta.upper().replace(" ", "")
+    return pasajes.filter(Q(codigo_pasaje__iexact=consulta) | Q(cliente_ci=texto) | Q(cliente__ci=texto))
+
+
+class ReprogramacionesView(RolRequeridoMixin, ListView):
+    """Pasajes de quienes perdieron el bus y todavia se pueden reprogramar."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+    template_name = "ventas/reprogramaciones.html"
+    context_object_name = "pasajes"
+
+    def get_queryset(self):
+        self.consulta = self.request.GET.get("q", "").strip()
+        return _filtrar_por_codigo_o_ci(pasajes_reprogramables(), self.consulta)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"q": self.consulta, "plazo_dias": PLAZO_REPROGRAMACION.days})
+        return context
+
+
+class ReprogramarView(RolRequeridoMixin, View):
+    """Elige el viaje nuevo (?viaje=, ?fecha=) y el asiento, y cobra cargo y diferencia."""
+
+    roles_permitidos = ["ventanillero", "supervisor", "admin"]
+    template_name = "ventas/reprogramar.html"
+
+    def _original(self, pk: int) -> Pasaje:
+        return get_object_or_404(pasajes_reprogramables(), pk=pk)
+
+    def _viajes(self, request, original: Pasaje):
+        texto = (request.GET.get("fecha") or request.POST.get("fecha") or "").strip()
+        try:
+            fecha = date.fromisoformat(texto) if texto else None
+        except ValueError:
+            fecha = None
+        return fecha, viajes_vendibles(fecha).exclude(pk=original.viaje_id)
+
+    def _render(self, request, original, viajes, fecha, viaje, form):
+        precio = None
+        if form.is_bound and form.is_valid():
+            precio = form.cleaned_data["precio"]
+        elif viaje is not None:
+            precio = form.initial.get("precio")
+        return render(
+            request,
+            self.template_name,
+            {
+                "original": original,
+                "viajes": viajes,
+                "fecha": fecha,
+                "viaje_seleccionado": viaje,
+                "pisos_asientos": mapa_de_asientos(viaje) if viaje else [],
+                "form": form,
+                "calculo": calcular_reprogramacion(original, precio) if precio else None,
+            },
+        )
+
+    def get(self, request, pk: int):
+        original = self._original(pk)
+        motivo = motivo_no_reprogramable(original)
+        if motivo:
+            messages.error(request, motivo)
+            return redirect("ventas:reprogramaciones")
+        fecha, viajes = self._viajes(request, original)
+        viaje_id = request.GET.get("viaje", "")
+        viaje = viajes.filter(pk=viaje_id).first() if viaje_id.isdigit() else None
+        inicial = {"metodo_pago": "efectivo"}
+        if viaje and viaje.ruta.precio_base:
+            inicial["precio"] = viaje.ruta.precio_base
+        return self._render(request, original, viajes, fecha, viaje, ReprogramarForm(initial=inicial))
+
+    def post(self, request, pk: int):
+        original = self._original(pk)
+        fecha, viajes = self._viajes(request, original)
+        viaje = get_object_or_404(viajes, pk=request.POST.get("viaje_id"))
+        form = ReprogramarForm(request.POST)
+        if form.is_valid():
+            datos = form.cleaned_data
+            try:
+                nuevo = reprogramar_pasaje(
+                    original_id=original.pk,
+                    viaje=viaje,
+                    asiento_viaje_id=datos["asiento_viaje_id"],
+                    precio_viaje=datos["precio"],
+                    pago=DatosPago(metodo=datos["metodo_pago"], monto=Decimal("0"), referencia=datos["referencia"]),
+                    cobrado_por=request.user,
+                    facturacion=DatosFacturacion(nit=datos["nit"], razon_social=datos["razon_social"]),
+                )
+            except ValidationError as error:
+                for mensaje in error.messages:
+                    form.add_error(None, mensaje)
+            else:
+                messages.success(
+                    request, f"Pasaje {original.codigo_pasaje} reprogramado. Nuevo pasaje {nuevo.codigo_pasaje}."
+                )
+                return redirect("ventas:boleto", pk=nuevo.pk)
+        return self._render(request, original, viajes, fecha, viaje, form)

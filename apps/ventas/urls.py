@@ -9,6 +9,8 @@ urlpatterns = [
     path("reservas/", views.ReservasPendientesView.as_view(), name="reservas_pendientes"),
     path("reservas/<int:pk>/cobrar/", views.CobrarSaldoView.as_view(), name="cobrar_saldo"),
     path("pasajero/", views.BuscarPasajeroView.as_view(), name="buscar_pasajero"),
+    path("reprogramaciones/", views.ReprogramacionesView.as_view(), name="reprogramaciones"),
+    path("reprogramaciones/<int:pk>/", views.ReprogramarView.as_view(), name="reprogramar"),
     # Publicas (VISTAS_PUBLICAS en apps/core/middleware.py)
     path("viajes/", views_publicas.BuscarViajesView.as_view(), name="buscar_viajes"),
     path("viajes/<int:pk>/", views_publicas.ViajePublicoView.as_view(), name="viaje_publico"),

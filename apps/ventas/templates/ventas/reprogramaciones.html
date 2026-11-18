@@ -1,0 +1,44 @@
+{% extends "base_dashboard.html" %}
+{% load core_extras %}
+
+{% block title %}Reprogramaciones — Trans Naser{% endblock %}
+{% block nav_reprogramaciones %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reprogramaciones</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pasajeros que no se presentaron a su viaje. Se reprograman una sola vez, hasta {{ plazo_dias }} días después de la salida, pagando el cargo y la diferencia de precio.</p>
+</div>
+<form method="get" class="flex items-center gap-2">
+<input class="form-input-custom border border-outline-variant rounded px-3 py-2 font-body-sm text-body-sm" name="q" placeholder="Código de pasaje o CI" type="text" value="{{ q }}"/>
+<button class="bg-deep-navy hover:bg-secondary text-white font-label text-label-md px-4 py-2 rounded" type="submit">Buscar</button>
+{% if q %}<a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy px-2" href="{% url 'ventas:reprogramaciones' %}">Ver todas</a>{% endif %}
+</form>
+</div>
+
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Código</th><th class="px-5 py-3">Pasajero</th><th class="px-5 py-3">Viaje perdido</th><th class="px-5 py-3">Pagado</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for pasaje in pasajes %}
+<tr>
+<td class="px-5 py-3 mono">{{ pasaje.codigo_pasaje }}</td>
+<td class="px-5 py-3">{{ pasaje.nombre_pasajero }}<br/><span class="mono text-on-surface-variant">{{ pasaje.cliente_ci }}</span></td>
+<td class="px-5 py-3">{{ pasaje.viaje.ruta.origen.ciudad }} → {{ pasaje.viaje.ruta.destino.ciudad }}<br/><span class="text-on-surface-variant">{{ pasaje.viaje.fecha_salida|date:"d/m/Y" }} {{ pasaje.viaje.horario.hora_salida|time:"H:i" }}</span></td>
+<td class="px-5 py-3 font-label">{{ pasaje.total_pagado|moneda }}</td>
+<td class="px-5 py-3 text-right"><a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:text-signal-orange" href="{% url 'ventas:reprogramar' pasaje.pk %}"><span class="material-symbols-outlined text-[18px]">event_repeat</span>Reprogramar</a></td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center text-on-surface-variant" colspan="5">{% if q %}No hay pasajes reprogramables con ese código o CI.{% else %}No hay pasajes para reprogramar.{% endif %}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

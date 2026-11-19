@@ -1,0 +1,31 @@
+{% extends "base_publico.html" %}
+
+{% block title %}Sobre nosotros — Trans Naser{% endblock %}
+
+{% block content %}
+{# Una sola columna estilo documento; max-w-3xl limita el largo de linea para leer comodo. #}
+{# Contenido entregado por el equipo; no agregar datos (direcciones, telefonos, rutas) que no esten aqui. #}
+<article class="mx-auto max-w-3xl py-6 md:py-10">
+<header class="text-center">
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg uppercase tracking-wide text-deep-navy">Sobre nosotros</h1>
+<div class="mx-auto mt-3 h-1 w-20 rounded-full bg-signal-orange"></div>
+</header>
+
+<section class="mt-10">
+<h2 class="font-headline text-[22px] font-extrabold uppercase tracking-wide text-signal-orange">Empresa</h2>
+<ul class="mt-4 list-disc space-y-3 pl-6 marker:text-signal-orange">
+<li><strong class="font-semibold text-deep-navy">Misión.</strong> Brindar excelencia en servicios logísticos personalizados de manera ejemplar, utilizando un cuerpo de personal profesional altamente competente, y flotas modernas, seguras y cómodas para la población.</li>
+<li><strong class="font-semibold text-deep-navy">Visión.</strong> Superar las expectativas de nuestros clientes al diferenciarnos por la calidad de nuestras flotas y la atención al cliente especializado, en la provisión de nuestros servicios.</li>
+</ul>
+</section>
+
+<section class="mt-10">
+<h2 class="font-headline text-[22px] font-extrabold uppercase tracking-wide text-signal-orange">Nuestra historia</h2>
+<div class="mt-4 space-y-4">
+<p>Trans Naser es una empresa boliviana dedicada al transporte de pasajeros por carretera. La empresa interdepartamental se creó en 1996 con Constantino Magne Miranda, David Aquino Gómez, Nicolasa Luna y Juan Magne Miranda.</p>
+<p>Sus operaciones principales se centran en rutas que conectan las ciudades de La Paz, Oruro, Potosí, Cochabamba, Sucre, entre otras.</p>
+<p>Desde sus inicios, la empresa ha buscado ofrecer un servicio de comodidad y puntualidad, incorporando mejoras constantes en su flota, adoptando buses de mayor capacidad y confort, y ampliando su cobertura para responder a la creciente demanda de movilidad interdepartamental.</p>
+</div>
+</section>
+</article>
+{% endblock %}

@@ -13,7 +13,9 @@ from django.contrib.auth.views import redirect_to_login
 # no rutas evita que un cambio en urls.py abra o cierre algo sin querer.
 VISTAS_PUBLICAS = frozenset(
     {
-        "core:root",  # "/" solo redirige al login
+        "core:root",  # landing publica
+        "core:salidas",  # horarios regulares, sin datos de pasajeros
+        "core:nosotros",
         "usuarios:login",
         "usuarios:logout",
         "usuarios:registro",  # registro publico de clientes

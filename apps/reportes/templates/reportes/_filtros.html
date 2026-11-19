@@ -1,0 +1,29 @@
+{# Pestanas Diario/Semanal/Mensual (conservan ruta y terminal) y rango personalizado por GET. #}
+<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+<div class="card-panel rounded-lg p-1.5 inline-flex gap-1 w-fit">
+{% for pestana in pestanas %}
+<a class="px-4 py-2 rounded font-label text-label-sm {% if pestana.activa %}bg-deep-navy text-white{% else %}text-on-surface-variant hover:bg-surface-container-low{% endif %}" href="{{ pestana.url }}"{% if pestana.activa %} aria-current="page"{% endif %}>{{ pestana.etiqueta }}</a>
+{% endfor %}
+</div>
+
+<form method="get" class="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:items-end">
+{% if periodo.tipo != "personalizado" %}<input type="hidden" name="periodo" value="{{ periodo.tipo }}"/>{% endif %}
+<label class="space-y-1"><span class="font-label text-label-sm text-on-surface-variant">Desde</span>{{ form.desde }}</label>
+<label class="space-y-1"><span class="font-label text-label-sm text-on-surface-variant">Hasta</span>{{ form.hasta }}</label>
+<label class="space-y-1"><span class="font-label text-label-sm text-on-surface-variant">Ruta</span>{{ form.ruta }}</label>
+<label class="space-y-1"><span class="font-label text-label-sm text-on-surface-variant">Terminal de origen</span>{{ form.terminal }}</label>
+<button class="col-span-2 sm:col-span-1 bg-deep-navy hover:bg-slate-blue text-white font-label text-label-sm rounded px-4 py-2.5" type="submit">Aplicar</button>
+</form>
+</div>
+
+{% if form.errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">
+{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+{% for campo in form %}{% for error in campo.errors %}<p>{{ campo.label }}: {{ error }}</p>{% endfor %}{% endfor %}
+<p>Se muestra el mes actual sin filtros.</p>
+</div>
+{% endif %}
+
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+Del <strong>{{ periodo.desde|date:"d/m/Y" }}</strong> al <strong>{{ periodo.hasta|date:"d/m/Y" }}</strong>{% if filtros.ruta %} · Ruta {{ filtros.ruta }}{% endif %}{% if filtros.terminal %} · Terminal de origen {{ filtros.terminal }}{% endif %}
+</p>

@@ -1,66 +1,64 @@
 {% extends "base_dashboard.html" %}
+{% load core_extras %}
 
-{% block title %}Reportes — Trans Naser{% endblock %}
+{% block title %}Reportes de ventas — Trans Naser{% endblock %}
 {% block nav_reportes %}active{% endblock %}
 
 {% block content %}
+<div class="space-y-6">
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 <div>
 <h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reportes de Ventas</h1>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Resumen de ventas de pasajes y encomiendas por periodo.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pasajes vendidos, dinero cobrado y encomiendas del período.</p>
 </div>
-<button class="border border-outline-variant rounded px-4 py-2.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy self-start"><span class="material-symbols-outlined text-[18px]">download</span>Exportar PDF</button>
-</div>
-
-<div class="card-panel rounded-lg p-1.5 inline-flex gap-1 w-fit">
-<button class="px-4 py-2 rounded font-label text-label-sm bg-deep-navy text-white">Diario</button>
-<button class="px-4 py-2 rounded font-label text-label-sm text-on-surface-variant hover:bg-surface-container-low">Semanal</button>
-<button class="px-4 py-2 rounded font-label text-label-sm text-on-surface-variant hover:bg-surface-container-low">Mensual</button>
+<a class="border border-outline-variant rounded px-4 py-2.5 font-label text-label-sm text-on-surface-variant flex items-center gap-1.5 hover:border-deep-navy self-start" href="{% url 'reportes:ventas_pdf' %}{% if querystring %}?{{ querystring }}{% endif %}"><span class="material-symbols-outlined text-[18px]">download</span>Exportar PDF</a>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+{% include "reportes/_nav.html" %}
+{% include "reportes/_filtros.html" %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 <div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
 <span class="font-label text-label-sm text-on-surface-variant">PASAJES VENDIDOS</span>
-<p class="font-headline text-headline-md text-deep-navy mt-1">1,248</p>
-<span class="font-label text-label-sm text-green-700 flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[16px]">trending_up</span>+12% vs ayer</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.pasajes_vendidos }}</p>
+{% if reporte.variacion_pasajes_pct is not None %}
+<span class="font-label text-label-sm {% if reporte.variacion_pasajes_pct >= 0 %}text-green-700{% else %}text-error{% endif %} flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[16px]">{% if reporte.variacion_pasajes_pct >= 0 %}trending_up{% else %}trending_down{% endif %}</span>{{ reporte.variacion_texto }}</span>
+{% endif %}
 </div>
 <div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
 <span class="font-label text-label-sm text-on-surface-variant">INGRESOS PASAJES</span>
-<p class="font-headline text-headline-md text-deep-navy mt-1">Bs 149,760</p>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.ingresos_pasajes|moneda }}</p>
+<span class="font-label text-label-sm text-on-surface-variant mt-1 block">Dinero cobrado (anticipos y saldos)</span>
 </div>
 <div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
 <span class="font-label text-label-sm text-on-surface-variant">ENCOMIENDAS</span>
-<p class="font-headline text-headline-md text-deep-navy mt-1">432</p>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.encomiendas }}</p>
 </div>
 <div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
 <span class="font-label text-label-sm text-on-surface-variant">INGRESOS ENCOMIENDAS</span>
-<p class="font-headline text-headline-md text-deep-navy mt-1">Bs 21,600</p>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.ingresos_encomiendas|moneda }}</p>
 </div>
 </div>
 
 <div class="card-panel rounded-lg p-5">
 <h2 class="font-headline text-headline-md text-deep-navy mb-4">Ventas por Ruta</h2>
+{% if reporte.rutas %}
 <div class="space-y-3">
+{% for venta in reporte.rutas %}
 <div>
-<div class="flex justify-between font-label text-label-sm text-on-surface-variant mb-1"><span>La Paz → Cochabamba</span><span>Bs 42,300</span></div>
-<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full bg-deep-navy" style="width:85%"></div></div>
+<div class="flex justify-between gap-4 font-label text-label-sm text-on-surface-variant mb-1"><span>{{ venta.ruta }}</span><span>{{ venta.total|moneda }}</span></div>
+<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full {% if forloop.first %}bg-deep-navy{% else %}bg-signal-orange{% endif %}" style="width:{{ venta.ancho_pct|floatformat:'0u' }}%"></div></div>
 </div>
-<div>
-<div class="flex justify-between font-label text-label-sm text-on-surface-variant mb-1"><span>La Paz → Santa Cruz</span><span>Bs 38,100</span></div>
-<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full bg-deep-navy" style="width:76%"></div></div>
+{% endfor %}
 </div>
-<div>
-<div class="flex justify-between font-label text-label-sm text-on-surface-variant mb-1"><span>Cochabamba → Sucre</span><span>Bs 21,450</span></div>
-<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full bg-signal-orange" style="width:43%"></div></div>
-</div>
-<div>
-<div class="flex justify-between font-label text-label-sm text-on-surface-variant mb-1"><span>Santa Cruz → Tarija</span><span>Bs 17,910</span></div>
-<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full bg-signal-orange" style="width:36%"></div></div>
-</div>
-</div>
+{% if reporte.total_rutas > reporte.rutas|length %}<p class="mt-3 font-body-sm text-body-sm text-on-surface-variant">Se muestran las {{ reporte.rutas|length }} rutas con más ingresos de {{ reporte.total_rutas }}.</p>{% endif %}
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">No hubo cobros de pasajes en este período.</p>
+{% endif %}
 </div>
 
 <div class="card-panel rounded-lg overflow-hidden">
+{% if reporte.hay_movimiento %}
 <div class="overflow-x-auto">
 <table class="w-full text-left">
 <thead>
@@ -69,26 +67,20 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for fila in reporte.filas %}
 <tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">19 Sep 2026</td>
-<td class="px-5 py-3 font-label">1,248</td>
-<td class="px-5 py-3 font-label">432</td>
-<td class="px-5 py-3 font-label">Bs 171,360</td>
+<td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ fila.fecha|date:"d M Y" }}</td>
+<td class="px-5 py-3 font-label">{{ fila.pasajes }}</td>
+<td class="px-5 py-3 font-label">{{ fila.encomiendas }}</td>
+<td class="px-5 py-3 font-label">{{ fila.ingresos|moneda }}</td>
 </tr>
-<tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">18 Sep 2026</td>
-<td class="px-5 py-3 font-label">1,114</td>
-<td class="px-5 py-3 font-label">398</td>
-<td class="px-5 py-3 font-label">Bs 152,890</td>
-</tr>
-<tr>
-<td class="px-5 py-3 font-label text-label-md text-deep-navy">17 Sep 2026</td>
-<td class="px-5 py-3 font-label">1,302</td>
-<td class="px-5 py-3 font-label">451</td>
-<td class="px-5 py-3 font-label">Bs 178,220</td>
-</tr>
+{% endfor %}
 </tbody>
 </table>
+</div>
+{% else %}
+<p class="p-5 font-body-sm text-body-sm text-on-surface-variant">Sin ventas ni encomiendas en este período.</p>
+{% endif %}
 </div>
 </div>
 {% endblock %}

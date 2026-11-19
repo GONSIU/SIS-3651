@@ -1,0 +1,22 @@
+{% extends "base_publico.html" %}
+{% load static %}
+
+{% block title %}Trans Naser — Pasajes en línea{% endblock %}
+
+{% block hero %}
+{# Solo hero: la informacion de horarios y de la empresa vive en sus propias vistas. #}
+{# El overlay navy da contraste al texto y disimula la baja resolucion de la foto (513x389). #}
+<section class="relative isolate flex min-h-[70vh] items-center overflow-hidden bg-deep-navy md:min-h-[78vh]">
+<img class="absolute inset-0 -z-10 h-full w-full object-cover" src="{% static 'img/hero-flota.jpg' %}" alt="Bus de dos pisos de la flota de Trans Naser"/>
+<div class="absolute inset-0 -z-10 bg-gradient-to-b from-deep-navy/80 via-deep-navy/70 to-deep-navy/90"></div>
+<div class="mx-auto w-full max-w-6xl px-4 py-16 text-center text-white">
+<p class="font-label text-label-md uppercase tracking-widest text-signal-orange">Transporte interdepartamental</p>
+<h1 class="mt-3 font-headline text-[36px] font-extrabold leading-tight md:text-[56px]">Compra tu pasaje en línea</h1>
+<div class="mx-auto mt-5 h-1 w-24 rounded-full bg-signal-orange"></div>
+<p class="mx-auto mt-6 max-w-2xl text-body-lg text-white/90">Elige tu viaje, mira los asientos libres y reserva desde el 30&nbsp;% del precio. El saldo lo pagas en ventanilla antes de salir.</p>
+<a class="mt-10 inline-flex items-center gap-3 rounded-full bg-signal-orange px-8 py-4 font-headline text-[18px] font-semibold shadow-lg shadow-black/30 transition hover:bg-secondary focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60" href="{% url 'ventas:buscar_viajes' %}">
+<span class="material-symbols-outlined text-[26px]">confirmation_number</span>Comprar pasaje
+</a>
+</div>
+</section>
+{% endblock %}

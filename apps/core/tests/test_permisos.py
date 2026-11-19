@@ -53,8 +53,8 @@ class LoginObligatorioMiddlewareTests(TestCase):
             with self.subTest(vista=nombre):
                 self.assertEqual(self.client.get(reverse(nombre)).status_code, 200)
 
-    def test_raiz_redirige_al_login_sin_next(self):
-        self.assertRedirects(self.client.get("/"), reverse("usuarios:login"))
+    def test_raiz_es_publica(self):
+        self.assertEqual(self.client.get("/").status_code, 200)
 
     def test_logout_sin_sesion_no_exige_login(self):
         self.assertRedirects(self.client.post(reverse("usuarios:logout")), reverse("usuarios:login"))

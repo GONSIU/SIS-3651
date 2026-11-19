@@ -1,0 +1,94 @@
+{% extends "base_publico.html" %}
+{% load static %}
+
+{% block title %}Salidas — Trans Naser{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Salidas</h1>
+<p class="mt-1 text-on-surface-variant">Elige tu ciudad de origen para ver sus destinos y horarios regulares. Las fechas concretas y los asientos libres se ven al comprar.</p>
+</div>
+
+{% if origenes %}
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+{% for origen in origenes %}
+<article class="card-panel flex flex-col overflow-hidden rounded-lg">
+{# Foto con el nombre de la ciudad encima; el degradado inferior asegura el contraste del texto. #}
+<div class="relative h-48 bg-gradient-to-br from-deep-navy to-slate-blue">
+{% if origen.imagen %}<img class="absolute inset-0 h-full w-full object-cover" src="{% static origen.imagen %}" alt="Vista de {{ origen.ciudad|title }}" loading="lazy"/>{% endif %}
+<div class="absolute inset-0 bg-gradient-to-t from-deep-navy/85 via-deep-navy/20 to-transparent"></div>
+<h2 class="absolute bottom-3 left-4 right-4 font-headline text-[28px] font-bold leading-tight text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.6)]">{{ origen.ciudad|title }}</h2>
+</div>
+
+<div class="flex flex-1 flex-col gap-4 bg-surface-container-low p-4">
+<dl class="flex-1 space-y-2 text-body-sm">
+<div><dt class="inline text-on-surface-variant">Salidas desde:</dt> <dd class="inline font-semibold text-deep-navy">{{ origen.ciudad|title }}</dd></div>
+<div><dt class="inline text-on-surface-variant">Destinos:</dt> <dd class="inline text-on-surface">{% for destino in origen.destinos %}{{ destino.ciudad|title }}{% if not forloop.last %} - {% endif %}{% endfor %}</dd></div>
+</dl>
+<div class="grid grid-cols-2 gap-2 font-label text-label-md uppercase">
+<a class="rounded-full bg-signal-orange px-3 py-2.5 text-center text-white hover:bg-secondary" href="{% url 'ventas:buscar_viajes' %}?origen={{ origen.ciudad|urlencode }}">Comprar</a>
+<button class="rounded-full bg-deep-navy px-3 py-2.5 text-white hover:bg-slate-blue" type="button" data-abrir-dialogo="horarios-{{ forloop.counter }}">Horarios</button>
+</div>
+</div>
+</article>
+
+{# Modal nativo: showModal() pone el overlay (::backdrop), bloquea el fondo y cierra con Escape. #}
+<dialog id="horarios-{{ forloop.counter }}" class="w-[calc(100%-2rem)] max-w-lg rounded-xl p-0 shadow-2xl backdrop:bg-deep-navy/70" aria-labelledby="horarios-{{ forloop.counter }}-titulo">
+<div class="relative p-6">
+<form method="dialog" class="absolute right-3 top-3">
+<button class="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high" type="submit" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button>
+</form>
+<p class="text-center"><span id="horarios-{{ forloop.counter }}-titulo" class="inline-block rounded-full bg-signal-orange px-8 py-3 font-headline text-headline-md text-white">{{ origen.ciudad|title }}</span></p>
+<div class="mt-6 max-h-[60vh] space-y-4 overflow-y-auto">
+{% for destino in origen.destinos %}
+<section>
+<h3 class="font-headline text-[18px] font-bold text-deep-navy">{{ destino.ciudad|title }}</h3>
+<p class="text-label-sm font-label uppercase text-on-surface-variant">Hora de salida:</p>
+{% if destino.horas %}
+<p class="font-label text-on-surface">{% for hora in destino.horas %}{{ hora|time:"H:i" }}{% if not forloop.last %} - {% endif %}{% endfor %}</p>
+{% else %}
+<p class="text-body-sm text-on-surface-variant">Sin horarios regulares publicados.</p>
+{% endif %}
+</section>
+{% endfor %}
+</div>
+</div>
+</dialog>
+{% endfor %}
+</div>
+{% else %}
+<div class="card-panel rounded-lg p-6 text-on-surface-variant">Aún no hay salidas publicadas.</div>
+{% endif %}
+
+{# Las licencias CC BY y CC BY-SA exigen citar autor y licencia. #}
+<details class="text-body-sm text-on-surface-variant">
+<summary class="cursor-pointer">Créditos de las fotos</summary>
+<ul class="mt-2 list-disc space-y-1 pl-5">
+<li>La Paz: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Ciudad_de_La_Paz_y_Nevado_Illimani_(Bolivia).jpg">Valdiney Pimenta</a>, <a class="underline" href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a></li>
+<li>Cochabamba: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Cochabamba_panorama.jpg">ozziebackpacker</a>, <a class="underline" href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a></li>
+<li>Santa Cruz: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Plaza_24_de_Septiembre,_Santa_Cruz_de_la_Sierra.jpg">Parallelepiped09</a>, <a class="underline" href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a></li>
+<li>Sucre: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Bolivia_-Sucre_-_La_Recoleta.jpg">Mario Falcetti</a>, <a class="underline" href="https://creativecommons.org/licenses/by/4.0">CC BY 4.0</a></li>
+<li>Potosí: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Potosi_-_Street_with_cerro_de_Potosi_in_background.jpg">P. Hughes</a>, <a class="underline" href="https://creativecommons.org/licenses/by/4.0">CC BY 4.0</a></li>
+<li>Oruro: <a class="underline" href="https://commons.wikimedia.org/wiki/File:Oruro_y_el_Lago_Uru_Uru.jpg">Alberto Schiappapietra</a>, <a class="underline" href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a></li>
+</ul>
+<p class="mt-2">Fotos de Wikimedia Commons, redimensionadas a 960 px de ancho.</p>
+</details>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Abre el modal de horarios de cada tarjeta y lo cierra al hacer clic fuera del cuadro.
+document.querySelectorAll("[data-abrir-dialogo]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+        document.getElementById(boton.dataset.abrirDialogo).showModal();
+    });
+});
+document.querySelectorAll("dialog").forEach(function (dialogo) {
+    dialogo.addEventListener("click", function (evento) {
+        if (evento.target === dialogo) {
+            dialogo.close();
+        }
+    });
+});
+</script>
+{% endblock %}

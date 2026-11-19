@@ -7,7 +7,7 @@
 <title>Trans Naser — Consola de Administración</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
@@ -63,7 +63,7 @@
                     "container-max": "1440px"
                 },
                 fontFamily: {
-                    "headline": ["Hanken Grotesk", "sans-serif"],
+                    "headline": ["Sora", "sans-serif"],
                     "body": ["Inter", "sans-serif"],
                     "label": ["JetBrains Mono", "monospace"]
                 },
@@ -91,10 +91,7 @@
 <main class="relative z-10 w-full max-w-md">
 <div class="glass-panel rounded-xl overflow-hidden flex flex-col p-8 md:p-10">
 <div class="flex flex-col items-center mb-8 text-center">
-<div class="w-20 h-20 mb-4 rounded-lg border border-outline-variant bg-surface-container-lowest overflow-hidden shadow-sm flex items-center justify-center p-2">
-<img alt="Logotipo Trans Naser" class="w-full h-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDLq2AZ7Ev8aWQKPrb794UmDm6ngLB4Ksx-73HVmdlnUwapQ7CN0ZHq0P5xnt3A0tekypgC80tBvsn_jZg1xC0t-cl9NAj31BlaTSRJ99Q1i1aTRRH0PxKE0RrsdmbmIvJhAq3dLFtIG3jHujMGxrKk5Hj73csa630t_yZjE9_3Uakawf-VmxnjZi_3GvsK8syd2vMzyZKRqxWYVGjZQ42YCfswW8AunzRCU4Ngvv0VHFulKCk4wt8mX9UkvQs5bnbh1E"/>
-</div>
-<h1 class="font-headline text-headline-lg text-deep-navy tracking-tight mb-1">Trans Naser</h1>
+<img alt="Trans Naser" class="mb-4 h-auto w-56" src="{% static 'img/logo-trans-naser.png' %}" width="488" height="191"/>
 <p class="font-body-sm text-body-sm text-on-surface-variant">Acceso a la Consola de Administración</p>
 </div>
 <form id="login-form" method="post" class="flex flex-col gap-5">

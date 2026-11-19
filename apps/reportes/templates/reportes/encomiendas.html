@@ -1,0 +1,43 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Reporte de encomiendas — Trans Naser{% endblock %}
+{% block nav_reportes %}active{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Encomiendas por Estado</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Encomiendas registradas en el período, según su estado actual. Despachadas = entregadas.</p>
+</div>
+
+{% include "reportes/_nav.html" %}
+{% include "reportes/_filtros.html" %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="card-panel rounded-lg p-4 border-l-4" style="border-left-color:#2b4494">
+<span class="font-label text-label-sm text-on-surface-variant">REGISTRADAS EN EL PERÍODO</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.total }}</p>
+</div>
+<div class="card-panel rounded-lg p-4 border-l-4 border-green-600">
+<span class="font-label text-label-sm text-on-surface-variant">DESPACHADAS (ENTREGADAS)</span>
+<p class="font-headline text-headline-md text-deep-navy mt-1">{{ reporte.despachadas }}{% if reporte.despachadas_pct is not None %} <span class="text-body-md text-on-surface-variant">({{ reporte.despachadas_pct|floatformat:1 }} %)</span>{% endif %}</p>
+</div>
+</div>
+
+<div class="card-panel rounded-lg p-5">
+<h2 class="font-headline text-headline-md text-deep-navy mb-4">Por estado</h2>
+{% if reporte.total %}
+<div class="space-y-3">
+{% for fila in reporte.estados %}
+<div>
+<div class="flex justify-between font-label text-label-sm text-on-surface-variant mb-1"><span>{{ fila.etiqueta }}</span><span>{{ fila.cantidad }} ({{ fila.pct|floatformat:1 }} %)</span></div>
+<div class="w-full h-2.5 rounded-full bg-surface-container-highest"><div class="h-2.5 rounded-full {% if fila.estado == 'entregado' %}bg-green-600{% elif fila.estado == 'extraviado' %}bg-error{% else %}bg-deep-navy{% endif %}" style="width:{{ fila.pct|floatformat:'0u' }}%"></div></div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">No se registraron encomiendas en este período.</p>
+{% endif %}
+</div>
+</div>
+{% endblock %}

@@ -32,11 +32,12 @@ class ComprobarPermisosMixin:
 
 
 class ReportesPermisosTests(ComprobarPermisosMixin, TestCase):
-    """Maqueta: se protege igual desde ya (decision de la Fase 2)."""
+    """Todos los reportes (y el PDF) solo para supervisor y admin."""
 
     @classmethod
     def setUpTestData(cls):
         cls.usuarios = crear_usuarios_por_rol(Terminal.objects.create(nombre="Bimodal", ciudad="La Paz"))
 
     def test_permisos(self):
-        self.comprobar_get([reverse("reportes:listado")], {"supervisor", "admin"})
+        urls = [reverse(f"reportes:{nombre}") for nombre in ("listado", "ventas_pdf", "ocupacion", "encomiendas")]
+        self.comprobar_get(urls, {"supervisor", "admin"})

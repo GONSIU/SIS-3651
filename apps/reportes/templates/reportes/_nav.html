@@ -1,0 +1,9 @@
+{# Navegacion entre reportes. El desempeno de ventanilla vive en apps/personal y solo se enlaza. #}
+{% with actual=request.resolver_match.view_name %}
+<nav class="flex flex-wrap gap-2 font-label text-label-sm" aria-label="Reportes">
+<a class="rounded-full px-4 py-2 {% if actual == 'reportes:listado' %}bg-deep-navy text-white{% else %}border border-outline-variant text-on-surface-variant hover:border-deep-navy{% endif %}" href="{% url 'reportes:listado' %}">Ventas</a>
+<a class="rounded-full px-4 py-2 {% if actual == 'reportes:ocupacion' %}bg-deep-navy text-white{% else %}border border-outline-variant text-on-surface-variant hover:border-deep-navy{% endif %}" href="{% url 'reportes:ocupacion' %}">Ocupación</a>
+<a class="rounded-full px-4 py-2 {% if actual == 'reportes:encomiendas' %}bg-deep-navy text-white{% else %}border border-outline-variant text-on-surface-variant hover:border-deep-navy{% endif %}" href="{% url 'reportes:encomiendas' %}">Encomiendas</a>
+<a class="rounded-full border border-outline-variant px-4 py-2 text-on-surface-variant hover:border-deep-navy" href="{% url 'personal:desempeno' %}">Desempeño de ventanilla</a>
+</nav>
+{% endwith %}

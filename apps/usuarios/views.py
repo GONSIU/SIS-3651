@@ -1,16 +1,23 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from apps.core.mixins import RolRequeridoMixin
-from .forms import RegistroClienteForm, RestablecerPasswordForm, UsuarioEditForm, UsuarioForm
+from .forms import (
+    CambiarPasswordForm,
+    RegistroClienteForm,
+    RestablecerPasswordForm,
+    UsuarioEditForm,
+    UsuarioForm,
+)
 from .models import Usuario
 
 
@@ -23,10 +30,13 @@ class LoginUsuarioView(LoginView):
 
     def get_default_redirect_url(self) -> str:
         # LoginView ya llamo a auth_login(): request.user es el usuario que entro.
-        destino = self.INICIO_POR_ROL.get(self.request.user.rol)
-        if destino:
-            return reverse(destino)
-        return super().get_default_redirect_url()
+        return url_inicio(self.request.user)
+
+
+def url_inicio(usuario: Usuario) -> str:
+    """Pagina de inicio del rol (INICIO_POR_ROL) o, si no tiene, LOGIN_REDIRECT_URL."""
+    destino = LoginUsuarioView.INICIO_POR_ROL.get(usuario.rol)
+    return reverse(destino) if destino else resolve_url(settings.LOGIN_REDIRECT_URL)
 
 
 class LogoutUsuarioView(LogoutView):
@@ -119,6 +129,7 @@ class NuevoUsuarioView(RolRequeridoMixin, CreateView):
         self.object = form.save(commit=False)
         # Solo se guarda el hash; el admin no vuelve a ver la contrasena.
         self.object.set_password(form.cleaned_data["password_temporal"])
+        self.object.debe_cambiar_password = True
         self.object.save()
         messages.success(
             self.request, f"Usuario {self.object.username} creado con contrasena temporal."
@@ -185,12 +196,51 @@ class RestablecerPasswordView(RolRequeridoMixin, FormView):
         return reverse("usuarios:editar", kwargs={"pk": self.usuario.pk})
 
     def form_valid(self, form):
+        es_propia = self.usuario.pk == self.request.user.pk
+        # form.user es self.usuario: form.save() guarda tambien la marca. Si el admin se
+        # la restablece a si mismo, la contrasena no es temporal (solo el la conoce).
+        self.usuario.debe_cambiar_password = not es_propia
         form.save()
-        if self.usuario.pk == self.request.user.pk:
+        if es_propia:
             # Sin esto, el admin que cambia su propia contrasena perderia su sesion.
             update_session_auth_hash(self.request, self.usuario)
-        messages.success(
-            self.request,
-            f"Contrasena de {self.usuario.username} restablecida. Sus sesiones abiertas se cerraron.",
-        )
+            mensaje = "Tu contrasena se cambio."
+        else:
+            mensaje = (
+                f"Contrasena de {self.usuario.username} restablecida. Sus sesiones abiertas se "
+                "cerraron y debera cambiarla al ingresar."
+            )
+        messages.success(self.request, mensaje)
         return super().form_valid(form)
+
+
+class CambiarPasswordView(RolRequeridoMixin, PasswordChangeView):
+    """Cada usuario cambia su propia contrasena, cuando quiera o porque es temporal.
+
+    PasswordChangeView ya llama a update_session_auth_hash(): la sesion actual sigue
+    abierta y las demas sesiones de ese usuario se cierran."""
+
+    # Todos los roles: cada uno cambia la suya. Se declara igual el mixin para que la
+    # vista no quede abierta por omision (docs/permisos.md).
+    roles_permitidos = [rol for rol, _ in Usuario.ROL_CHOICES]
+    form_class = CambiarPasswordForm
+    template_name = "usuarios/cambiar_password.html"
+
+    def get_success_url(self) -> str:
+        return url_inicio(self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # El cliente no tiene sidebar: usa el layout publico, como sus otras pantallas.
+        es_cliente = self.request.user.rol == "cliente"
+        context["layout"] = "base_publico.html" if es_cliente else "base_dashboard.html"
+        context["obligatorio"] = self.request.user.debe_cambiar_password
+        context["url_volver"] = url_inicio(self.request.user)
+        return context
+
+    def form_valid(self, form):
+        # form.user es request.user: form.save() guarda tambien la marca.
+        form.user.debe_cambiar_password = False
+        respuesta = super().form_valid(form)
+        messages.success(self.request, "Tu contrasena se cambio.")
+        return respuesta

@@ -8,6 +8,7 @@ vista nueva que olvide el mixin no quede publica.
 
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
+from django.shortcuts import redirect
 
 # Vistas accesibles sin sesion, por nombre de URL (namespace:nombre). Usar nombres y
 # no rutas evita que un cambio en urls.py abra o cierre algo sin querer.
@@ -57,3 +58,30 @@ class LoginObligatorioMiddleware:
             return None
 
         return redirect_to_login(request.get_full_path())
+
+
+# Lo unico que puede usar quien tiene una contrasena temporal: cambiarla o salir.
+VISTAS_CON_PASSWORD_TEMPORAL = frozenset({"usuarios:cambiar_password", "usuarios:logout"})
+
+
+class CambioPasswordObligatorioMiddleware:
+    """Manda a cambiar la contrasena a quien tiene debe_cambiar_password.
+
+    Revisarlo solo al iniciar sesion no basta: bastaria escribir otra URL para saltarlo.
+    No importa apps.usuarios: lee el atributo con getattr y usa nombres de URL."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.prefijo_static = "/" + settings.STATIC_URL.lstrip("/")
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if not getattr(request.user, "debe_cambiar_password", False):
+            return None
+        if request.resolver_match.view_name in VISTAS_CON_PASSWORD_TEMPORAL:
+            return None
+        if request.path.startswith(self.prefijo_static):
+            return None
+        return redirect("usuarios:cambiar_password")

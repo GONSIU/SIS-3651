@@ -108,7 +108,10 @@
 </div>
 <img alt="Avatar del administrador" class="w-9 h-9 rounded-full object-cover border border-outline-variant" src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|default:'Admin' }}&background=0a192f&color=fff&bold=true"/>
 </button>
-<div id="user-menu" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-md border border-surface-container-highest shadow-lg py-1 z-50">
+<div id="user-menu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-md border border-surface-container-highest shadow-lg py-1 z-50">
+<a class="w-full text-left px-4 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2" href="{% url 'usuarios:cambiar_password' %}">
+<span class="material-symbols-outlined text-[18px]">key</span>Cambiar contrasena
+</a>
 <form method="post" action="{% url 'usuarios:logout' %}">
 {% csrf_token %}
 <button class="w-full text-left px-4 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2" type="submit">

@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm, UserCreationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
@@ -161,5 +161,21 @@ class RestablecerPasswordForm(SetPasswordForm):
         super().__init__(*args, **kwargs)
         self.fields["new_password1"].label = "Contrasena temporal nueva"
         self.fields["new_password2"].label = "Repite la contrasena"
+        for campo in self.fields.values():
+            campo.widget.attrs["class"] = INPUT_CLASSES
+
+
+class CambiarPasswordForm(PasswordChangeForm):
+    """Cada usuario cambia su propia contrasena.
+
+    Reutiliza PasswordChangeForm de Django: exige la contrasena actual (asi una sesion
+    olvidada abierta no basta para cambiarla), compara las dos nuevas y aplica
+    AUTH_PASSWORD_VALIDATORS."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["old_password"].label = "Contrasena actual"
+        self.fields["new_password1"].label = "Contrasena nueva"
+        self.fields["new_password2"].label = "Repite la contrasena nueva"
         for campo in self.fields.values():
             campo.widget.attrs["class"] = INPUT_CLASSES

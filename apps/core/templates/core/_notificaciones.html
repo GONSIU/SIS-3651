@@ -1,0 +1,18 @@
+{# Campana del encabezado (etiqueta campana_notificaciones). El punto solo aparece si hay alertas. #}
+<div class="relative">
+<button class="relative p-2 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-deep-navy transition-colors" type="button" onclick="toggleMenu('menu-notificaciones')" aria-label="Notificaciones{% if total %} ({{ total }}){% endif %}" aria-haspopup="true" data-menu="menu-notificaciones">
+<span class="material-symbols-outlined">notifications</span>
+{% if total %}<span class="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-signal-orange text-white text-[0.65rem] font-label leading-[1.1rem] text-center" data-total-notificaciones>{{ total }}</span>{% endif %}
+</button>
+<div id="menu-notificaciones" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-md border border-surface-container-highest shadow-lg py-2 z-50">
+<p class="px-4 pb-2 font-label text-label-md text-deep-navy border-b border-surface-container-highest">Notificaciones</p>
+{% for notificacion in notificaciones %}
+<a class="flex items-start gap-3 px-4 py-2.5 hover:bg-surface-container-low" href="{{ notificacion.url }}">
+<span class="material-symbols-outlined text-[20px] text-signal-orange">{{ notificacion.icono }}</span>
+<span class="font-body-sm text-body-sm text-on-surface"><strong class="font-label">{{ notificacion.cantidad }}</strong> {{ notificacion.texto }}</span>
+</a>
+{% empty %}
+<p class="px-4 py-3 font-body-sm text-body-sm text-on-surface-variant">No hay alertas pendientes.</p>
+{% endfor %}
+</div>
+</div>

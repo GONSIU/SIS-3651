@@ -3,11 +3,14 @@ from dataclasses import dataclass, field
 from datetime import time
 
 from django.db.models import Prefetch
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.generic import TemplateView
 
+from apps.core.busqueda import LARGO_MINIMO, MAX_RESULTADOS, buscar
 from apps.core.mixins import RolRequeridoMixin
+from apps.core.notificaciones import ROLES_VENTANILLA
 from apps.rutas.models import Horario, Ruta
 from apps.viajes.models import Viaje
 from apps.ventas.models import Pasaje
@@ -140,4 +143,30 @@ class IndexView(RolRequeridoMixin, TemplateView):
                 "encomiendas_despachadas_pct": encomiendas_despachadas_pct,
             }
         )
+        return context
+
+
+class BuscarView(RolRequeridoMixin, TemplateView):
+    """Resultados de la barra de busqueda del encabezado (?q=).
+
+    Mismos roles que las pantallas a las que enlaza (boleto y guia de encomienda). Si
+    un codigo coincide con un solo pasaje o encomienda, va directo a el."""
+
+    roles_permitidos = list(ROLES_VENTANILLA)
+    template_name = "core/buscar.html"
+
+    def get(self, request, *args, **kwargs):
+        self.resultados = buscar(request.GET.get("q", ""))
+        unico = self.resultados.unico
+        if isinstance(unico, Pasaje):
+            return redirect("ventas:boleto", pk=unico.pk)
+        if isinstance(unico, Encomienda):
+            return redirect("encomiendas:guia", pk=unico.pk)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["resultados"] = self.resultados
+        context["largo_minimo"] = LARGO_MINIMO
+        context["max_resultados"] = MAX_RESULTADOS
         return context

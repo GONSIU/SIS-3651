@@ -1,4 +1,4 @@
-{% load static %}
+{% load static core_notificaciones %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -87,15 +87,15 @@
 <span class="material-symbols-outlined">menu</span>
 </button>
 <p class="font-headline text-headline-md text-deep-navy shrink-0 hidden sm:block">Trans Naser</p>
-<div class="relative flex-1 max-w-md">
+{% puede_buscar user as mostrar_busqueda %}
+{% if mostrar_busqueda %}
+<form class="relative flex-1 max-w-md" method="get" action="{% url 'core:buscar' %}" role="search">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-<input class="form-input-custom w-full bg-surface-container-low border border-outline-variant rounded pl-10 pr-4 py-2 font-body-sm text-body-sm" placeholder="Buscar rutas, incidencias, guías…" type="text"/>
-</div>
+<input class="form-input-custom w-full bg-surface-container-low border border-outline-variant rounded pl-10 pr-4 py-2 font-body-sm text-body-sm" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Buscar pasaje, encomienda, CI o nombre" aria-label="Buscar pasaje, encomienda, CI o nombre" type="search"/>
+</form>
+{% endif %}
 <div class="ml-auto flex items-center gap-3 md:gap-4 shrink-0">
-<button class="relative p-2 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-deep-navy transition-colors" aria-label="Notificaciones">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-signal-orange rounded-full"></span>
-</button>
+{% campana_notificaciones %}
 <button class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-deep-navy transition-colors" aria-label="Configuración">
 <span class="material-symbols-outlined">settings</span>
 </button>
@@ -219,12 +219,25 @@
     // ---------- User menu ----------
     function toggleUserMenu() {
         document.getElementById('user-menu').classList.toggle('hidden');
+        var notif = document.getElementById('menu-notificaciones');
+        if (notif) notif.classList.add('hidden');
+    }
+    // Menus que se abren con un boton data-menu="<id>" (hoy, la campana).
+    function toggleMenu(id) {
+        document.getElementById(id).classList.toggle('hidden');
+        document.getElementById('user-menu').classList.add('hidden');
     }
     document.addEventListener('click', function (e) {
         var menu = document.getElementById('user-menu');
         if (!menu.contains(e.target) && !e.target.closest('button[onclick="toggleUserMenu()"]')) {
             menu.classList.add('hidden');
         }
+        document.querySelectorAll('button[data-menu]').forEach(function (boton) {
+            var panel = document.getElementById(boton.dataset.menu);
+            if (panel && !panel.contains(e.target) && !boton.contains(e.target)) {
+                panel.classList.add('hidden');
+            }
+        });
     });
 
     // ---------- Modals ----------

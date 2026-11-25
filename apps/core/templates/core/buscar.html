@@ -1,0 +1,79 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Buscar &mdash; Trans Naser{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Buscar</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pasajes y encomiendas por codigo (PSJ-..., ENC-...), CI o nombre.</p>
+</div>
+
+<form class="flex gap-3 max-w-2xl" method="get" action="{% url 'core:buscar' %}" role="search">
+<input class="form-input-custom flex-1 border border-outline-variant rounded px-3 py-2.5" name="q" value="{{ resultados.texto }}" placeholder="Codigo, CI o nombre" aria-label="Texto a buscar" autofocus/>
+<button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded" type="submit">Buscar</button>
+</form>
+
+{% if not resultados.criterio %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">Escribe al menos {{ largo_minimo }} caracteres.</p>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+{% if resultados.criterio == "codigo" %}Por codigo{% elif resultados.criterio == "ci" %}Por CI exacto{% else %}Por nombre{% endif %}: {{ resultados.total }} resultado{{ resultados.total|pluralize }}. Se muestran hasta {{ max_resultados }} de cada tipo, los mas recientes primero.
+</p>
+
+<section class="space-y-3">
+<h2 class="font-headline text-headline-sm text-deep-navy">Pasajes ({{ resultados.pasajes|length }})</h2>
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Codigo</th><th class="px-5 py-3">Pasajero</th><th class="px-5 py-3">Viaje</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for pasaje in resultados.pasajes %}
+<tr>
+<td class="px-5 py-3 font-label mono">{{ pasaje.codigo_pasaje }}</td>
+<td class="px-5 py-3">{{ pasaje.nombre_pasajero }}{% if pasaje.cliente_ci %} <span class="text-on-surface-variant">&middot; CI {{ pasaje.cliente_ci }}</span>{% endif %}</td>
+<td class="px-5 py-3 text-on-surface-variant">{{ pasaje.viaje.ruta.origen.ciudad }} &rarr; {{ pasaje.viaje.ruta.destino.ciudad }} &middot; {{ pasaje.viaje.fecha_salida|date:"d/m/Y" }} {{ pasaje.viaje.horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3 font-label">{{ pasaje.get_estado_display }}</td>
+<td class="px-5 py-3 text-right"><a class="text-deep-navy hover:text-signal-orange underline" href="{% url 'ventas:boleto' pasaje.pk %}">Ver boleto</a></td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center text-on-surface-variant" colspan="5">Ningun pasaje coincide.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+<section class="space-y-3">
+<h2 class="font-headline text-headline-sm text-deep-navy">Encomiendas ({{ resultados.encomiendas|length }})</h2>
+<div class="card-panel rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
+<th class="px-5 py-3">Guia</th><th class="px-5 py-3">Remitente &rarr; destinatario</th><th class="px-5 py-3">Viaje</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
+{% for encomienda in resultados.encomiendas %}
+<tr>
+<td class="px-5 py-3 font-label mono">{{ encomienda.codigo_guia }}</td>
+<td class="px-5 py-3">{{ encomienda.remitente_nombre }} &rarr; {{ encomienda.destinatario_nombre }}</td>
+<td class="px-5 py-3 text-on-surface-variant">{{ encomienda.viaje.ruta.origen.ciudad }} &rarr; {{ encomienda.viaje.ruta.destino.ciudad }} &middot; {{ encomienda.viaje.fecha_salida|date:"d/m/Y" }}</td>
+<td class="px-5 py-3 font-label">{{ encomienda.get_estado_display }}</td>
+<td class="px-5 py-3 text-right"><a class="text-deep-navy hover:text-signal-orange underline" href="{% url 'encomiendas:guia' encomienda.pk %}">Ver guia</a></td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-6 text-center text-on-surface-variant" colspan="5">Ninguna encomienda coincide.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endif %}
+{% endblock %}

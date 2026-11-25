@@ -53,6 +53,11 @@ class Usuario(AbstractUser):
         related_name="empleados_asignados",
     )
 
+    # True cuando el admin crea la cuenta o restablece la contrasena: es temporal y el
+    # admin la conoce. CambioPasswordObligatorioMiddleware obliga a cambiarla antes de
+    # usar el sistema; CambiarPasswordView la vuelve a False.
+    debe_cambiar_password = models.BooleanField(default=False)
+
     objects = UsuarioManager()
 
     def __str__(self):

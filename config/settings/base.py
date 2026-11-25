@@ -44,6 +44,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     # Despues de AuthenticationMiddleware: necesita request.user.
     "apps.core.middleware.LoginObligatorioMiddleware",
+    # Despues de LoginObligatorioMiddleware: solo actua sobre usuarios con sesion.
+    "apps.core.middleware.CambioPasswordObligatorioMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

@@ -15,6 +15,7 @@
 <span class="material-symbols-outlined text-[20px]">account_circle</span>
 <span class="max-w-[10rem] truncate">{{ user.get_full_name|default:user.username }}</span>
 </a>
+<a class="flex items-center hover:text-signal-orange" href="{% url 'usuarios:cambiar_password' %}" title="Cambiar contrasena" aria-label="Cambiar contrasena"><span class="material-symbols-outlined text-[20px]">key</span></a>
 <form method="post" action="{% url 'usuarios:logout' %}">{% csrf_token %}<button class="rounded-full border border-white/30 px-3 py-1.5 hover:border-signal-orange hover:text-signal-orange" type="submit">Salir</button></form>
 {% else %}
 <a class="hover:text-signal-orange" href="{% url 'usuarios:login' %}{% if request.resolver_match.app_name != 'usuarios' %}?next={{ request.path|urlencode }}{% endif %}">Iniciar sesión</a>

@@ -8,7 +8,7 @@
 <a class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-deep-navy" href="{% url 'viajes:listado' %}"><span class="material-symbols-outlined">arrow_back</span></a>
 <div>
 <h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Programar Viaje</h1>
-<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Asigna un bus a una ruta y horario existente. Los asientos se generan automáticamente.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Elige la fecha y un horario que salga ese dia. La ruta sale del horario y los asientos se generan solos.</p>
 </div>
 </div>
 
@@ -17,7 +17,7 @@
 {% endif %}
 
 <div class="card-panel rounded-lg p-6 max-w-2xl">
-{% if not form.fields.ruta.queryset.exists or not form.fields.bus.queryset.exists %}
+{% if not form.fields.horario.queryset.exists or not form.fields.bus.queryset.exists %}
 <p class="font-body-sm text-body-sm text-on-surface-variant">
 Necesitas al menos una <a class="text-deep-navy underline" href="#">ruta activa</a> con horario y un <a class="text-deep-navy underline" href="{% url 'flota:nuevo' %}">bus activo</a> registrado antes de poder programar un viaje.
 </p>
@@ -26,13 +26,15 @@ Necesitas al menos una <a class="text-deep-navy underline" href="#">ruta activa<
 {% csrf_token %}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.ruta.id_for_label }}">Ruta</label>
-{{ form.ruta }}
-{% if form.ruta.errors %}<p class="text-body-sm text-error mt-1">{{ form.ruta.errors.0 }}</p>{% endif %}
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.fecha_salida.id_for_label }}">Fecha de salida</label>
+{{ form.fecha_salida }}
+{% if form.fecha_salida.errors %}<p class="text-body-sm text-error mt-1">{{ form.fecha_salida.errors.0 }}</p>{% endif %}
 </div>
-<div>
+<div class="hidden sm:block"></div>
+<div class="sm:col-span-2">
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.horario.id_for_label }}">Horario</label>
 {{ form.horario }}
+<p class="text-body-sm text-on-surface-variant mt-1" id="horario-ayuda">Entre parentesis, los dias que sale cada horario (L,M,X,J,V,S,D).</p>
 {% if form.horario.errors %}<p class="text-body-sm text-error mt-1">{{ form.horario.errors.0 }}</p>{% endif %}
 </div>
 <div>
@@ -41,11 +43,6 @@ Necesitas al menos una <a class="text-deep-navy underline" href="#">ruta activa<
 {% if form.bus.errors %}<p class="text-body-sm text-error mt-1">{{ form.bus.errors.0 }}</p>{% endif %}
 </div>
 <div>
-<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.fecha_salida.id_for_label }}">Fecha de salida</label>
-{{ form.fecha_salida }}
-{% if form.fecha_salida.errors %}<p class="text-body-sm text-error mt-1">{{ form.fecha_salida.errors.0 }}</p>{% endif %}
-</div>
-<div class="sm:col-span-2">
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.conductor.id_for_label }}">Conductor</label>
 {{ form.conductor }}
 <p class="text-body-sm text-on-surface-variant mt-1">{{ form.conductor.help_text }}</p>
@@ -60,4 +57,41 @@ Necesitas al menos una <a class="text-deep-navy underline" href="#">ruta activa<
 </form>
 {% endif %}
 </div>
+<script>
+// Deshabilita los horarios que no salen el dia de la fecha elegida. Es solo una ayuda:
+// el servidor vuelve a validar el dia en Viaje.clean().
+(function () {
+  const fecha = document.getElementById("{{ form.fecha_salida.id_for_label }}");
+  const horario = document.getElementById("{{ form.horario.id_for_label }}");
+  const ayuda = document.getElementById("horario-ayuda");
+  if (!fecha || !horario) return;
+  // getDay(): 0 = domingo. Mismas letras que DIAS_VALIDOS en apps/rutas/models.py.
+  const LETRAS = ["D", "L", "M", "X", "J", "V", "S"];
+  const NOMBRES = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+  const textoInicial = ayuda.textContent;
+
+  function filtrar() {
+    if (!fecha.value) {
+      horario.querySelectorAll("option[data-dias]").forEach(function (op) { op.disabled = false; });
+      ayuda.textContent = textoInicial;
+      return;
+    }
+    // "T00:00" evita que la fecha se interprete en UTC y caiga en el dia anterior.
+    const dia = new Date(fecha.value + "T00:00").getDay();
+    let disponibles = 0;
+    horario.querySelectorAll("option[data-dias]").forEach(function (op) {
+      const sale = op.dataset.dias.split(",").includes(LETRAS[dia]);
+      op.disabled = !sale;
+      if (sale) disponibles += 1;
+    });
+    if (horario.selectedOptions.length && horario.selectedOptions[0].disabled) horario.value = "";
+    ayuda.textContent = disponibles
+      ? disponibles + " horario(s) salen el " + NOMBRES[dia] + "."
+      : "Ningun horario sale el " + NOMBRES[dia] + ". Elige otra fecha.";
+  }
+
+  fecha.addEventListener("change", filtrar);
+  filtrar();
+})();
+</script>
 {% endblock %}

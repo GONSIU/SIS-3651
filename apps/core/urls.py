@@ -9,4 +9,5 @@ urlpatterns = [
     path("salidas/", views.SalidasView.as_view(), name="salidas"),
     path("sobre-nosotros/", views.NosotrosView.as_view(), name="nosotros"),
     path("dashboard/", views.IndexView.as_view(), name="index"),
+    path("buscar/", views.BuscarView.as_view(), name="buscar"),
 ]

@@ -93,7 +93,7 @@ class DesempenoVentanillaView(RolRequeridoMixin, TemplateView):
                 {
                     "nombre": usuario.get_full_name() or usuario.username,
                     "username": usuario.username,
-                    "cargo": empleado.cargo if empleado else None,
+                    "cargo": empleado.get_cargo_display() if empleado else None,
                     "terminal": usuario.terminal_asignado,
                     "ventas_realizadas": fila["ventas_realizadas"],
                     "monto_total_vendido": fila["monto_total_vendido"],

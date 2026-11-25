@@ -54,7 +54,7 @@ class ViajesPermisosTests(ComprobarPermisosMixin, TestCase):
         horario = Horario.objects.create(ruta=ruta, hora_salida=time(8), dias_semana=",".join(DIAS_VALIDOS))
         bus = Bus.objects.create(placa="1234ABC", nombre_tipo="Cama", capacidad_pasajeros=10, capacidad_carga_kg=0)
         conductor = Empleado.objects.create(
-            usuario=self.usuarios["conductor"], cargo="Conductor", fecha_ingreso=date(2024, 1, 1)
+            usuario=self.usuarios["conductor"], cargo="conductor", fecha_ingreso=date(2024, 1, 1)
         )
         viaje = Viaje.objects.create(
             ruta=ruta, horario=horario, bus=bus, conductor=conductor,

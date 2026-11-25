@@ -57,7 +57,7 @@ class PermisosTests(PersonalTestCase):
 class EmpleadoFormTests(PersonalTestCase):
     def test_solo_ofrece_personal_activo_sin_ficha(self):
         con_ficha = Usuario.objects.create_user("karen", rol="ventanillero", terminal_asignado=self.terminal)
-        Empleado.objects.create(usuario=con_ficha, cargo="Cajera", fecha_ingreso=timezone.localdate())
+        Empleado.objects.create(usuario=con_ficha, cargo="ventanillero", fecha_ingreso=timezone.localdate())
         Usuario.objects.create_user("baja", rol="ventanillero", is_active=False,
                                     terminal_asignado=self.terminal)
 
@@ -71,7 +71,7 @@ class EmpleadoFormTests(PersonalTestCase):
         self.assertIn(nuevo, EmpleadoForm().fields["usuario"].queryset)
 
     def test_rechaza_cliente_aunque_se_envie_a_mano(self):
-        form = EmpleadoForm(data={"usuario": self.cliente.pk, "cargo": "Cajero",
+        form = EmpleadoForm(data={"usuario": self.cliente.pk, "cargo": "ventanillero",
                                   "fecha_ingreso": timezone.localdate()})
         self.assertFalse(form.is_valid())
         self.assertIn("aun no tenga ficha", form.errors["usuario"][0])
@@ -91,15 +91,31 @@ class NuevoEmpleadoViewTests(PersonalTestCase):
 
     def test_crea_ficha(self):
         respuesta = self.client.post(reverse("personal:nuevo"), {
-            "usuario": self.ventanillero.pk, "cargo": "Cajero",
+            "usuario": self.ventanillero.pk, "cargo": "encargado_encomiendas",
             "fecha_ingreso": timezone.localdate().isoformat(),
         })
         self.assertRedirects(respuesta, reverse("personal:listado"))
-        self.assertEqual(self.ventanillero.empleado.cargo, "Cajero")
+        self.assertEqual(self.ventanillero.empleado.cargo, "encargado_encomiendas")
+
+    def test_rechaza_cargo_de_otro_rol(self):
+        respuesta = self.client.post(reverse("personal:nuevo"), {
+            "usuario": self.ventanillero.pk, "cargo": "conductor",
+            "fecha_ingreso": timezone.localdate().isoformat(),
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn("cargo", respuesta.context["form"].errors)
+        self.assertFalse(Empleado.objects.filter(usuario=self.ventanillero).exists())
+
+    def test_formulario_marca_rol_y_cargos(self):
+        respuesta = self.client.get(reverse("personal:nuevo"))
+        self.assertContains(respuesta, f'value="{self.ventanillero.pk}" data-rol="ventanillero"')
+        self.assertContains(respuesta, 'value="ayudante_bus" data-roles="conductor"')
+        self.assertNotContains(respuesta, 'value="mecanico"')
+        self.assertContains(respuesta, "Selecciona un cargo")
 
     def test_avisa_si_no_hay_candidatos(self):
         # El supervisor sigue activo (tiene la sesion): se le da ficha para excluirlo.
-        Empleado.objects.create(usuario=self.supervisor, cargo="Jefe", fecha_ingreso=timezone.localdate())
+        Empleado.objects.create(usuario=self.supervisor, cargo="supervisor", fecha_ingreso=timezone.localdate())
         Usuario.objects.exclude(rol="cliente").exclude(pk=self.supervisor.pk).update(is_active=False)
         respuesta = self.client.get(reverse("personal:nuevo"))
         self.assertFalse(respuesta.context["hay_candidatos"])

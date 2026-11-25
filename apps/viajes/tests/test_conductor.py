@@ -45,7 +45,7 @@ class ConductorTestCase(TestCase):
     @staticmethod
     def crear_empleado(username: str, rol: str, activo: bool = True) -> Empleado:
         usuario = Usuario.objects.create_user(username, rol=rol, is_active=activo, first_name=username.title())
-        return Empleado.objects.create(usuario=usuario, cargo=rol.title(), fecha_ingreso=date(2024, 1, 1))
+        return Empleado.objects.create(usuario=usuario, cargo=Empleado.cargos_para_rol(rol)[0], fecha_ingreso=date(2024, 1, 1))
 
     def viaje(self, **kwargs) -> Viaje:
         datos = {

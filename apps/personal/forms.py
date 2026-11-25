@@ -20,24 +20,57 @@ def usuarios_sin_ficha():
     )
 
 
+class UsuarioSelect(forms.Select):
+    """Cada opcion lleva data-rol para que el template filtre los cargos compatibles."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        opcion = super().create_option(name, value, label, selected, index, subindex, attrs)
+        usuario = getattr(value, "instance", None)
+        if usuario is not None:
+            opcion["attrs"]["data-rol"] = usuario.rol
+        return opcion
+
+
+class CargoSelect(forms.Select):
+    """Cada cargo lleva data-roles: los roles de usuario que lo admiten."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        opcion = super().create_option(name, value, label, selected, index, subindex, attrs)
+        roles = [rol for rol, cargos in Empleado.CARGOS_POR_ROL.items() if value in cargos]
+        if roles:
+            opcion["attrs"]["data-roles"] = ",".join(roles)
+        return opcion
+
+
+class UsuarioChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj) -> str:
+        nombre = obj.get_full_name() or obj.username
+        return f"{nombre} ({obj.username}) - rol {obj.get_rol_display()}"
+
+
 class EmpleadoForm(forms.ModelForm):
     # Declarado en la clase para filtrar el queryset sin sobrescribir __init__.
     # Django copia el campo y vuelve a evaluar el queryset en cada formulario, asi que
     # la lista siempre esta al dia.
-    usuario = forms.ModelChoiceField(
+    usuario = UsuarioChoiceField(
         queryset=usuarios_sin_ficha(),
         label="Usuario",
         empty_label="Selecciona un usuario",
         error_messages={
             "invalid_choice": "Elige un usuario de personal activo que aun no tenga ficha."
         },
-        widget=forms.Select(attrs={"class": SELECT_CLASSES}),
+        widget=UsuarioSelect(attrs={"class": SELECT_CLASSES}),
     )
 
     class Meta:
         model = Empleado
         fields = ["usuario", "cargo", "fecha_ingreso"]
         widgets = {
-            "cargo": forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. Ventanillero"}),
+            "cargo": CargoSelect(attrs={"class": SELECT_CLASSES}),
             "fecha_ingreso": forms.DateInput(format="%Y-%m-%d", attrs={"class": INPUT_CLASSES, "type": "date"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Sin default en el modelo, Django pone "---------" como primera opcion.
+        self.fields["cargo"].choices = [("", "Selecciona un cargo"), *Empleado.CARGO_CHOICES]

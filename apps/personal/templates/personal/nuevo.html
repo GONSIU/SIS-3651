@@ -33,6 +33,7 @@
 <div>
 <label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.cargo.id_for_label }}">Cargo</label>
 {{ form.cargo }}
+<p class="text-body-sm text-on-surface-variant mt-1" id="cargo-ayuda">Elige primero el usuario: solo se habilitan los cargos de su rol.</p>
 {% if form.cargo.errors %}<p class="text-body-sm text-error mt-1">{{ form.cargo.errors.0 }}</p>{% endif %}
 </div>
 <div>
@@ -48,4 +49,30 @@
 </div>
 </form>
 </div>
+<script>
+// Habilita solo los cargos compatibles con el rol del usuario elegido (data-rol y
+// data-roles vienen de EmpleadoForm). Es una ayuda: Empleado.clean() lo valida igual.
+(function () {
+  const usuario = document.getElementById("{{ form.usuario.id_for_label }}");
+  const cargo = document.getElementById("{{ form.cargo.id_for_label }}");
+  if (!usuario || !cargo) return;
+
+  function filtrar() {
+    const elegido = usuario.selectedOptions[0];
+    const rol = elegido ? elegido.dataset.rol : undefined;
+    const compatibles = [];
+    cargo.querySelectorAll("option[data-roles]").forEach(function (op) {
+      const sirve = !rol || op.dataset.roles.split(",").includes(rol);
+      op.disabled = !sirve;
+      if (sirve) compatibles.push(op);
+    });
+    if (cargo.selectedOptions[0] && cargo.selectedOptions[0].disabled) cargo.value = "";
+    // Si el rol admite un solo cargo, se elige solo.
+    if (rol && compatibles.length === 1) cargo.value = compatibles[0].value;
+  }
+
+  usuario.addEventListener("change", filtrar);
+  filtrar();
+})();
+</script>
 {% endblock %}

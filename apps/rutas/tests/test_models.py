@@ -110,6 +110,20 @@ class HorarioTests(TestCase):
         self.assertTrue(horario.opera_el(sabado))
         self.assertFalse(horario.opera_el(domingo))
 
+    def test_dias_legibles(self):
+        casos = {"L": "lunes", "V,L": "lunes y viernes", "L,X,V": "lunes, miercoles y viernes",
+                 "L,M,X,J,V,S,D": "todos los dias"}
+        for dias, esperado in casos.items():
+            with self.subTest(dias=dias):
+                self.assertEqual(Horario(ruta=self.ruta, dias_semana=dias).dias_legibles(), esperado)
+
+    def test_proxima_salida(self):
+        horario = Horario(ruta=self.ruta, hora_salida=time(8), dias_semana="L,S")
+        lunes = date(2026, 11, 2)
+        self.assertEqual(horario.proxima_salida(lunes), lunes)
+        self.assertEqual(horario.proxima_salida(date(2026, 11, 3)), date(2026, 11, 7))
+        self.assertEqual(horario.proxima_salida(date(2026, 11, 8)), date(2026, 11, 9))
+
     def formulario(self, dias_semana: str) -> HorarioForm:
         return HorarioForm(
             data={"ruta": self.ruta.pk, "hora_salida": "08:00", "dias_semana": dias_semana}

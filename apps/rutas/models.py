@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -11,6 +12,10 @@ from apps.core.validators import normalizar_espacios, validar_solo_letras
 
 # El orden coincide con date.weekday(): 0 = lunes.
 DIAS_VALIDOS = ["L", "M", "X", "J", "V", "S", "D"]
+NOMBRES_DIAS = {
+    "L": "lunes", "M": "martes", "X": "miercoles", "J": "jueves",
+    "V": "viernes", "S": "sabado", "D": "domingo",
+}
 
 
 def validar_dias_semana(valor: str) -> None:
@@ -149,3 +154,21 @@ class Horario(TimeStampedModel):
     def opera_el(self, fecha) -> bool:
         """Indica si este horario sale el dia de la semana de esa fecha."""
         return DIAS_VALIDOS[fecha.weekday()] in self.dias_semana.split(",")
+
+    def dias_legibles(self) -> str:
+        """Dias de salida en palabras y en orden de semana: "lunes, miercoles y viernes"."""
+        dias = self.dias_semana.split(",")
+        nombres = [NOMBRES_DIAS[d] for d in DIAS_VALIDOS if d in dias]
+        if len(nombres) == len(DIAS_VALIDOS):
+            return "todos los dias"
+        if len(nombres) == 1:
+            return nombres[0]
+        return f"{', '.join(nombres[:-1])} y {nombres[-1]}"
+
+    def proxima_salida(self, desde: date) -> date | None:
+        """Primera fecha desde `desde` (incluida) en la que opera; None si no tiene dias."""
+        for dias in range(len(DIAS_VALIDOS)):
+            fecha = desde + timedelta(days=dias)
+            if self.opera_el(fecha):
+                return fecha
+        return None

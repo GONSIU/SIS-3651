@@ -132,20 +132,44 @@ class ViajeTests(TestCase):
                 with self.assertRaises(IntegrityError), transaction.atomic():
                     self.viaje(estado=estado, minutos_retraso=15).save()
 
+    def datos_form(self, **cambios) -> dict:
+        datos = {"horario": self.horario.pk, "bus": self.bus.pk, "fecha_salida": self.manana.isoformat()}
+        datos.update(cambios)
+        return datos
+
+    def test_formulario_toma_la_ruta_del_horario(self):
+        # Antes se elegia la ruta aparte y un horario de otra ruta daba error.
+        form = ViajeForm(data=self.datos_form(horario=self.horario_misma_hora.pk))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().ruta, self.otra_ruta)
+
+    def test_formulario_ignora_una_ruta_enviada(self):
+        form = ViajeForm(data=self.datos_form(ruta=self.otra_ruta.pk))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().ruta, self.ruta)
+
     def test_formulario_muestra_el_error_en_el_campo(self):
-        form = ViajeForm(
-            data={
-                "ruta": self.ruta.pk,
-                "horario": self.horario_misma_hora.pk,
-                "bus": self.bus.pk,
-                "fecha_salida": self.manana.isoformat(),
-                "estado": "programado",
-            }
-        )
+        self.viaje(horario=self.horario_misma_hora, ruta=self.otra_ruta).save()
+        form = ViajeForm(data=self.datos_form())
         self.assertFalse(form.is_valid())
-        self.assertIn("horario", form.errors)
+        self.assertIn("bus", form.errors)
+
+    def test_formulario_dia_sin_salida_sugiere_la_proxima(self):
+        un_dia = DIAS_VALIDOS[self.manana.weekday()]
+        Horario.objects.filter(pk=self.horario.pk).update(dias_semana=un_dia)
+        otro_dia = self.manana + timedelta(days=1)
+        form = ViajeForm(data=self.datos_form(fecha_salida=otro_dia.isoformat()))
+        self.assertFalse(form.is_valid())
+        proxima = self.manana + timedelta(days=7)
+        self.assertIn(f"La proxima salida es el {proxima:%d/%m/%Y}", form.errors["fecha_salida"][0])
+
+    def test_formulario_marca_los_dias_de_cada_horario(self):
+        html = str(ViajeForm()["horario"])
+        self.assertIn(f'data-dias="{self.horario.dias_semana}"', html)
+        self.assertIn(f'min="{timezone.localdate().isoformat()}"', str(ViajeForm()["fecha_salida"]))
 
     def test_formulario_con_campos_vacios_no_lanza_excepcion(self):
         form = ViajeForm(data={"estado": "programado"})
         self.assertFalse(form.is_valid())
-        self.assertIn("ruta", form.errors)
+        self.assertIn("horario", form.errors)
+        self.assertNotIn("ruta", form.fields)

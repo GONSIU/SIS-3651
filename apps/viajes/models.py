@@ -109,9 +109,7 @@ class Viaje(models.Model):
             if self.ruta_id and self.horario.ruta_id != self.ruta_id:
                 errores.setdefault("horario", []).append("El horario no pertenece a la ruta elegida.")
             if self.fecha_salida and not self.horario.opera_el(self.fecha_salida):
-                errores.setdefault("fecha_salida", []).append(
-                    f"El horario no opera ese dia (dias: {self.horario.dias_semana})."
-                )
+                errores.setdefault("fecha_salida", []).append(self._mensaje_dia_sin_salida())
 
         if self.bus_id:
             if self._bus_es_nuevo() and self.bus.estado != "activo":
@@ -133,6 +131,15 @@ class Viaje(models.Model):
 
         if errores:
             raise ValidationError(errores)
+
+    def _mensaje_dia_sin_salida(self) -> str:
+        """Dice que dias sale el horario y sugiere la fecha valida mas cercana."""
+        horario = self.horario
+        mensaje = f"El horario de las {horario.hora_salida:%H:%M} sale {horario.dias_legibles()}."
+        proxima = horario.proxima_salida(max(self.fecha_salida, timezone.localdate()))
+        if proxima:
+            mensaje += f" La proxima salida es el {proxima:%d/%m/%Y}."
+        return mensaje
 
     def _bus_es_nuevo(self) -> bool:
         """Indica si el viaje se esta creando o si cambia el bus guardado."""

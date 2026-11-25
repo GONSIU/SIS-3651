@@ -126,7 +126,6 @@ class ViajeFormConductorTests(ConductorTestCase):
         empleado = self.crear_empleado("emp_venta", "ventanillero")
         form = ViajeForm(
             data={
-                "ruta": self.ruta.pk,
                 "horario": self.horario.pk,
                 "bus": self.bus.pk,
                 "conductor": empleado.pk,

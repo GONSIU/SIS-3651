@@ -148,7 +148,6 @@ class RutaYHorarioInactivosTests(GestionRutasTestCase):
         self.assertNotIn(otro, horarios)
         Ruta.objects.filter(pk=self.ruta.pk).update(activa=False)
         self.assertFalse(ViajeForm().fields["horario"].queryset.exists())
-        self.assertFalse(ViajeForm().fields["ruta"].queryset.filter(pk=self.ruta.pk).exists())
 
     def test_no_se_crea_viaje_en_ruta_u_horario_inactivo(self):
         casos = {"ruta": Ruta.objects.filter(pk=self.ruta.pk), "horario": Horario.objects.filter(pk=self.horario.pk)}

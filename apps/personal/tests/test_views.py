@@ -121,6 +121,13 @@ class NuevoEmpleadoViewTests(PersonalTestCase):
         self.assertFalse(respuesta.context["hay_candidatos"])
         self.assertContains(respuesta, "No hay usuarios de personal sin ficha")
 
+    def test_listado_no_muestra_usuario_ni_rol(self):
+        Empleado.objects.create(usuario=self.ventanillero, cargo="ventanillero", fecha_ingreso=timezone.localdate())
+        respuesta = self.client.get(reverse("personal:listado"))
+        self.assertContains(respuesta, "<th class=\"px-5 py-3\">Cargo</th>", html=False)
+        for columna in ("Usuario", "Rol"):
+            self.assertNotContains(respuesta, f'<th class="px-5 py-3">{columna}</th>')
+
     def test_listado_cuenta_personal_sin_ficha(self):
         respuesta = self.client.get(reverse("personal:listado"))
         self.assertEqual(respuesta.context["sin_ficha"], 3)

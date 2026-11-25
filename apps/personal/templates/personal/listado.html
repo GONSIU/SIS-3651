@@ -31,21 +31,19 @@
 <table class="w-full text-left">
 <thead>
 <tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
-<th class="px-5 py-3">Empleado</th><th class="px-5 py-3">Usuario</th><th class="px-5 py-3">Cargo</th><th class="px-5 py-3">Rol</th><th class="px-5 py-3">Terminal</th><th class="px-5 py-3">Ingreso</th>
+<th class="px-5 py-3">Empleado</th><th class="px-5 py-3">Cargo</th><th class="px-5 py-3">Terminal</th><th class="px-5 py-3">Ingreso</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
 {% for empleado in empleados %}
 <tr>
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ empleado.usuario.get_full_name|default:empleado.usuario.username }}</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">{{ empleado.usuario.username }}</td>
 <td class="px-5 py-3 font-label">{{ empleado.get_cargo_display }}</td>
-<td class="px-5 py-3 font-label text-on-surface-variant">{{ empleado.usuario.get_rol_display }}</td>
 <td class="px-5 py-3 font-label text-on-surface-variant">{{ empleado.terminal|default:"&mdash;" }}</td>
 <td class="px-5 py-3 font-label text-on-surface-variant">{{ empleado.fecha_ingreso|date:"d M Y" }}</td>
 </tr>
 {% empty %}
-<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="6">Todavia no hay empleados registrados.</td></tr>
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="4">Todavia no hay empleados registrados.</td></tr>
 {% endfor %}
 </tbody>
 </table>

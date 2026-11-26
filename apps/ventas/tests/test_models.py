@@ -132,7 +132,15 @@ class PagoTests(VentasTestCase):
 
     def test_referencia_obligatoria_salvo_en_efectivo(self):
         self.pago(metodo="efectivo").full_clean()
-        for metodo in ("tarjeta", "qr", "transferencia"):
+        for metodo in ("qr", "transferencia"):
             with self.subTest(metodo=metodo):
                 self.assertIn("referencia_externa", self.errores(self.pago(metodo=metodo)))
                 self.pago(metodo=metodo, referencia_externa="ABC123").full_clean()
+
+    def test_tarjeta_ya_no_se_acepta_pero_los_pagos_antiguos_siguen_validos(self):
+        self.assertIn("metodo", self.errores(self.pago(metodo="tarjeta", referencia_externa="ABC123")))
+        # Un pago con tarjeta anterior al cambio se sigue pudiendo validar y mostrar.
+        antiguo = self.pago(metodo="tarjeta", referencia_externa="ABC123")
+        antiguo.save()
+        antiguo.full_clean()
+        self.assertEqual(antiguo.get_metodo_display(), "Tarjeta")

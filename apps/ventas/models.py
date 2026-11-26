@@ -195,6 +195,13 @@ class Pasaje(models.Model):
         self.save(update_fields=["estado"])
 
 
+def errores_metodo_vigente(pago) -> dict[str, str]:
+    """Un pago nuevo solo puede usar Pago.METODOS_VIGENTES. Lo usan Pago y PagoEncomienda."""
+    if pago._state.adding and pago.metodo and pago.metodo not in Pago.METODOS_VIGENTES:
+        return {"metodo": "Este metodo de pago ya no se acepta."}
+    return {}
+
+
 class Pago(models.Model):
     METODO_CHOICES = [
         ("efectivo", "Efectivo"),
@@ -202,6 +209,12 @@ class Pago(models.Model):
         ("qr", "QR"),
         ("transferencia", "Transferencia"),
     ]
+    # Metodos que se aceptan en pagos nuevos. "tarjeta" sigue en METODO_CHOICES solo para
+    # que los pagos antiguos se muestren bien (boleto, reportes); ya no se ofrece.
+    # (En el cuerpo de una clase, la condicion de una comprension no ve otros atributos de
+    # la clase: por eso se filtra por el valor y no contra METODOS_VIGENTES.)
+    METODOS_VIGENTES_CHOICES = [opcion for opcion in METODO_CHOICES if opcion[0] != "tarjeta"]
+    METODOS_VIGENTES = tuple(clave for clave, _ in METODOS_VIGENTES_CHOICES)
 
     pasaje = models.ForeignKey(Pasaje, related_name="pagos", on_delete=models.CASCADE)
     metodo = models.CharField(max_length=20, choices=METODO_CHOICES)
@@ -240,6 +253,7 @@ class Pago(models.Model):
 
         if self.metodo and self.metodo != "efectivo" and not self.referencia_externa:
             errores["referencia_externa"] = "Este metodo de pago necesita una referencia."
+        errores.update(errores_metodo_vigente(self))
 
         if self.pasaje_id and self.monto is not None:
             pagado = (

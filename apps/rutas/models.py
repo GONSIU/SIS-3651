@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Lower
@@ -12,6 +12,7 @@ from apps.core.validators import normalizar_espacios, validar_solo_letras
 
 # El orden coincide con date.weekday(): 0 = lunes.
 DIAS_VALIDOS = ["L", "M", "X", "J", "V", "S", "D"]
+CARRIL_MAXIMO = 99
 NOMBRES_DIAS = {
     "L": "lunes", "M": "martes", "X": "miercoles", "J": "jueves",
     "V": "viernes", "S": "sabado", "D": "domingo",
@@ -128,13 +129,25 @@ class Horario(TimeStampedModel):
     # Inactivo: no se programan viajes nuevos con este horario. Es la forma de retirar un
     # horario que ya tiene viajes y por eso no se puede borrar.
     activo = models.BooleanField(default=True)
+    # Carril de la terminal de origen desde donde sale este horario; se imprime en el
+    # boleto. Opcional: los horarios anteriores no lo tienen. Es fijo por horario (no por
+    # viaje): cambiarlo afecta a todos sus viajes, tambien a los ya vendidos.
+    carril = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(CARRIL_MAXIMO)],
+        help_text=f"Opcional. Numero de carril de salida (1 a {CARRIL_MAXIMO}).",
+    )
 
     class Meta:
         ordering = ["ruta", "hora_salida"]
         constraints = [
             models.UniqueConstraint(
                 fields=["ruta", "hora_salida"], name="uniq_horario_ruta_hora"
-            )
+            ),
+            models.CheckConstraint(
+                check=Q(carril__isnull=True) | Q(carril__gte=1, carril__lte=CARRIL_MAXIMO),
+                name="horario_carril_rango",
+                violation_error_message=f"El carril debe estar entre 1 y {CARRIL_MAXIMO}.",
+            ),
         ]
 
     def __str__(self):

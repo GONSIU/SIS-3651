@@ -108,10 +108,11 @@
 {% if form.metodo_pago.errors %}<p class="text-body-sm text-error">{{ form.metodo_pago.errors.0 }}</p>{% endif %}
 </div>
 <div class="space-y-1.5">
-<label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.referencia_externa.id_for_label }}">Referencia de Pago (QR, tarjeta o transferencia)</label>
+<label class="font-label text-label-md text-deep-navy uppercase" for="{{ form.referencia_externa.id_for_label }}">Referencia de Pago (QR o transferencia)</label>
 {{ form.referencia_externa }}
 {% if form.referencia_externa.errors %}<p class="text-body-sm text-error">{{ form.referencia_externa.errors.0 }}</p>{% endif %}
 </div>
+{% include "ventas/_pago_qr.html" with metodo=form.metodo_pago referencia=form.referencia_externa monto_campo=form.precio.id_for_label %}
 </div>
 </div>
 <div class="card-panel rounded-lg p-6">

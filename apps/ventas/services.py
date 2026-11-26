@@ -13,8 +13,10 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
+from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.models import Notificacion
 from apps.core.validators import normalizar_ci, validar_ci
 from apps.viajes.models import AsientoViaje, Viaje
 from .models import Comprobante, Pago, Pasaje
@@ -160,7 +162,26 @@ def registrar_venta(
 
         _registrar_pago(pasaje, pago, registrado_por=vendido_por)
         _emitir_comprobante(pasaje, facturacion)
+        _avisar_cliente(
+            pasaje, "Compra de pasaje registrada",
+            f"Se registro tu pasaje {pasaje.codigo_pasaje} para {_descripcion_viaje(pasaje)}.",
+        )
     return pasaje
+
+
+def _descripcion_viaje(pasaje: Pasaje) -> str:
+    viaje = pasaje.viaje
+    return (
+        f"{viaje.ruta.origen.ciudad} - {viaje.ruta.destino.ciudad} del {viaje.fecha_salida:%d/%m/%Y} "
+        f"a las {viaje.horario.hora_salida:%H:%M}, asiento {pasaje.asiento_viaje.asiento.numero}"
+    )
+
+
+def _avisar_cliente(pasaje: Pasaje, titulo: str, mensaje: str) -> None:
+    """Notifica al titular con cuenta del pasaje (si lo hay), con enlace al boleto. Se
+    llama dentro de la transaccion de la venta: si la venta falla, el aviso tampoco queda."""
+    if pasaje.cliente_id:
+        Notificacion.avisar(pasaje.cliente_id, titulo, mensaje, reverse("ventas:boleto", args=[pasaje.pk]))
 
 
 def _bloquear_asiento_libre(viaje, asiento_viaje_id: int) -> AsientoViaje:
@@ -400,6 +421,18 @@ def registrar_reserva(
             asiento_viaje.save(update_fields=["estado"])
         _registrar_pago(pasaje, pago)
         _emitir_comprobante(pasaje, facturacion)
+        if pagado_completo:
+            _avisar_cliente(
+                pasaje, "Reserva confirmada y pagada",
+                f"Tu pasaje {pasaje.codigo_pasaje} para {_descripcion_viaje(pasaje)} esta pagado.",
+            )
+        else:
+            _avisar_cliente(
+                pasaje, "Reserva confirmada",
+                f"Reservaste {_descripcion_viaje(pasaje)} (pasaje {pasaje.codigo_pasaje}). Paga el saldo "
+                f"de Bs {precio - pago.monto} en ventanilla antes del "
+                f"{timezone.localtime(pasaje.reservado_hasta):%d/%m/%Y %H:%M} o la reserva vence.",
+            )
     return pasaje
 
 
@@ -488,6 +521,10 @@ def cobrar_saldo(
             comprobante.razon_social_cliente = facturacion.razon_social
             comprobante.full_clean()
             comprobante.save(update_fields=["tipo", "nit_cliente", "razon_social_cliente"])
+        _avisar_cliente(
+            pasaje, "Saldo pagado",
+            f"Se cobro el saldo de tu pasaje {pasaje.codigo_pasaje}. Tu boleto ya es valido para abordar.",
+        )
     return pasaje
 
 
@@ -613,4 +650,9 @@ def reprogramar_pasaje(
         original.estado = "reprogramado"
         original.actualizado_por = cobrado_por
         original.save(update_fields=["estado", "actualizado_por", "updated_at"])
+        _avisar_cliente(
+            nuevo, "Pasaje reprogramado",
+            f"Tu pasaje {original.codigo_pasaje} se reprogramo: nuevo pasaje {nuevo.codigo_pasaje} para "
+            f"{_descripcion_viaje(nuevo)}.",
+        )
     return nuevo

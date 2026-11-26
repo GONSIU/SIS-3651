@@ -1,0 +1,44 @@
+{% extends "base_publico.html" %}
+
+{% block title %}Notificaciones — Trans Naser{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Notificaciones</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Avisos de tus reservas, pagos, viajes y reclamos.{% if sin_leer %} Tienes {{ sin_leer }} sin leer.{% endif %}</p>
+</div>
+{% if sin_leer %}
+<form method="post" action="{% url 'core:notificaciones_leidas' %}" class="self-start">
+{% csrf_token %}
+<button class="px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high flex items-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">done_all</span>Marcar todas como leídas</button>
+</form>
+{% endif %}
+</div>
+
+<div class="card-panel rounded-lg divide-y divide-surface-container-highest">
+{% for notificacion in notificaciones %}
+<div class="flex items-start gap-3 p-4 {% if not notificacion.leida %}bg-surface-container-low{% endif %}">
+<span class="material-symbols-outlined text-[22px] {% if notificacion.leida %}text-on-surface-variant{% else %}text-signal-orange{% endif %}">{% if notificacion.leida %}drafts{% else %}mail{% endif %}</span>
+<a class="flex-1 min-w-0" href="{% url 'core:notificacion' notificacion.pk %}">
+<p class="font-label text-label-md text-deep-navy {% if not notificacion.leida %}font-semibold{% endif %}">{{ notificacion.titulo }}{% if not notificacion.leida %} <span class="sr-only">(sin leer)</span>{% endif %}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ notificacion.mensaje }}</p>
+<p class="font-label text-label-sm text-on-surface-variant mt-0.5">{{ notificacion.created_at|date:"d/m/Y H:i" }}</p>
+</a>
+<form method="post" action="{% url 'core:notificacion_eliminar' notificacion.pk %}">
+{% csrf_token %}
+<button class="p-1.5 rounded text-on-surface-variant hover:text-red-700 hover:bg-surface-container" type="submit" aria-label="Eliminar notificacion" title="Eliminar"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</form>
+</div>
+{% empty %}
+<p class="p-6 text-center text-on-surface-variant font-body-sm text-body-sm">No tienes notificaciones.</p>
+{% endfor %}
+</div>
+{% if is_paginated %}
+<div class="flex items-center justify-center gap-3 font-body-sm text-body-sm text-on-surface-variant">
+{% if page_obj.has_previous %}<a class="underline" href="?page={{ page_obj.previous_page_number }}">Anteriores</a>{% endif %}
+<span>{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a class="underline" href="?page={{ page_obj.next_page_number }}">Siguientes</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

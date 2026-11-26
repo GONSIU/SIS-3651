@@ -1,0 +1,15 @@
+{% load static %}
+{% comment %}
+QR de pago ficticio; lo maneja static/js/pago_qr.js. Uso:
+  include "ventas/_pago_qr.html" with metodo=form.metodo referencia=form.referencia
+  y una fuente del monto: monto=<valor> | monto_campo=<id de input> | monto_texto=<id de elemento>
+{% endcomment %}
+<div class="hidden col-span-full flex flex-col sm:flex-row items-center gap-4 rounded-lg border border-outline-variant bg-surface-container-low p-4" data-pago-qr data-url="{% url 'ventas:qr_pago' %}" data-metodo="{{ metodo.id_for_label }}" data-referencia="{{ referencia.id_for_label }}"{% if monto %} data-monto="{{ monto|stringformat:'s' }}"{% endif %}{% if monto_campo %} data-monto-campo="{{ monto_campo }}"{% endif %}{% if monto_texto %} data-monto-texto="{{ monto_texto }}"{% endif %}>
+<img class="hidden w-44 h-44 bg-white rounded border border-outline-variant p-1" data-qr-imagen alt="Codigo QR de pago" width="176" height="176"/>
+<div class="space-y-1 text-center sm:text-left">
+<p class="font-label text-label-md text-deep-navy flex items-center gap-1 justify-center sm:justify-start"><span class="material-symbols-outlined text-[18px]">qr_code_2</span>Escanea para pagar</p>
+<p class="font-body-sm text-body-sm text-on-surface" data-qr-detalle></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">QR de demostracion: no realiza cobros reales. La referencia se guarda con el pago.</p>
+</div>
+</div>
+<script src="{% static 'js/pago_qr.js' %}" defer></script>

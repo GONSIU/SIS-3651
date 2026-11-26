@@ -53,8 +53,9 @@
 {% include "ventas/cliente/_campo.html" with campo=form.monto %}
 {% include "ventas/cliente/_campo.html" with campo=form.metodo %}
 {% include "ventas/cliente/_campo.html" with campo=form.referencia clase="md:col-span-2" %}
+{% include "ventas/_pago_qr.html" with metodo=form.metodo referencia=form.referencia monto_campo=form.monto.id_for_label %}
 </div>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Pago simulado con fines académicos: el sistema acepta la referencia sin verificarla con un banco.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Pago simulado con fines academicos: con QR la referencia se genera sola; con transferencia escribe su codigo. El sistema no la verifica con un banco.</p>
 </section>
 </div>
 

@@ -72,7 +72,7 @@ class VentaForm(FacturacionMixin, forms.Form):
         widget=forms.NumberInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 120.00", "step": "0.01"}),
     )
     metodo_pago = forms.ChoiceField(
-        choices=Pago.METODO_CHOICES,
+        choices=Pago.METODOS_VIGENTES_CHOICES,
         widget=forms.Select(attrs={"class": SELECT_CLASSES}),
     )
     referencia_externa = forms.CharField(
@@ -157,7 +157,7 @@ class ReservaForm(FacturacionMixin, forms.Form):
     El viaje, el asiento y el precio no vienen del formulario: la vista los toma de la URL
     y del viaje, y el servicio los vuelve a validar."""
 
-    METODOS_ONLINE = [opcion for opcion in Pago.METODO_CHOICES if opcion[0] != "efectivo"]
+    METODOS_ONLINE = [opcion for opcion in Pago.METODOS_VIGENTES_CHOICES if opcion[0] != "efectivo"]
 
     cliente_nombre = forms.CharField(
         max_length=100, label="Nombre completo del pasajero",
@@ -182,7 +182,7 @@ class ReservaForm(FacturacionMixin, forms.Form):
     )
     referencia = forms.CharField(
         max_length=100, label="Referencia de la transaccion",
-        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Codigo del QR, tarjeta o transferencia"}),
+        widget=forms.TextInput(attrs={"class": INPUT_CLASSES, "placeholder": "Se llena al elegir QR; o el codigo de la transferencia"}),
     )
     acepta_condiciones = forms.BooleanField(
         label="Acepto que el pago no es reembolsable y que, si pago un anticipo, debo pagar el saldo en ventanilla antes del plazo.",
@@ -219,11 +219,11 @@ class CobrarSaldoForm(FacturacionMixin, forms.Form):
     """Cobro del saldo de una reserva. El monto no se escribe: es el saldo del servidor."""
 
     metodo = forms.ChoiceField(
-        choices=Pago.METODO_CHOICES, label="Metodo de pago",
+        choices=Pago.METODOS_VIGENTES_CHOICES, label="Metodo de pago",
         widget=forms.Select(attrs={"class": SELECT_CLASSES}),
     )
     referencia = forms.CharField(
-        max_length=100, required=False, label="Referencia (QR, tarjeta o transferencia)",
+        max_length=100, required=False, label="Referencia (QR o transferencia)",
         widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
     )
 
@@ -248,11 +248,11 @@ class ReprogramarForm(FacturacionMixin, forms.Form):
         widget=forms.NumberInput(attrs={"class": INPUT_CLASSES, "step": "0.01"}),
     )
     metodo_pago = forms.ChoiceField(
-        choices=Pago.METODO_CHOICES, label="Metodo de pago",
+        choices=Pago.METODOS_VIGENTES_CHOICES, label="Metodo de pago",
         widget=forms.Select(attrs={"class": SELECT_CLASSES}),
     )
     referencia = forms.CharField(
-        max_length=100, required=False, label="Referencia (QR, tarjeta o transferencia)",
+        max_length=100, required=False, label="Referencia (QR o transferencia)",
         widget=forms.TextInput(attrs={"class": INPUT_CLASSES}),
     )
 

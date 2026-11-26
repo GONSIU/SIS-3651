@@ -67,6 +67,7 @@
 {% include "ventas/cliente/_campo.html" with campo=form.precio %}
 {% include "ventas/cliente/_campo.html" with campo=form.metodo_pago %}
 {% include "ventas/cliente/_campo.html" with campo=form.referencia %}
+{% include "ventas/_pago_qr.html" with metodo=form.metodo_pago referencia=form.referencia monto=calculo.a_pagar %}
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 {% include "ventas/cliente/_campo.html" with campo=form.nit %}

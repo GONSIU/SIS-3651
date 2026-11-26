@@ -69,10 +69,11 @@ class HorarioForm(forms.ModelForm):
 
     class Meta:
         model = Horario
-        fields = ["ruta", "hora_salida", "dias_semana"]
+        fields = ["ruta", "hora_salida", "dias_semana", "carril"]
         widgets = {
             "ruta": forms.Select(attrs={"class": SELECT_CLASSES}),
             "hora_salida": forms.TimeInput(attrs={"class": INPUT_CLASSES, "type": "time"}, format="%H:%M"),
+            "carril": forms.NumberInput(attrs={"class": INPUT_CLASSES, "placeholder": "Ej. 4", "min": 1}),
         }
 
     def __init__(self, *args, **kwargs):

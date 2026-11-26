@@ -1,10 +1,10 @@
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -16,6 +16,8 @@ from apps.core.mixins import RolRequeridoMixin
 from apps.viajes.models import Viaje, AsientoViaje
 from .forms import CobrarSaldoForm, ReprogramarForm, VentaForm
 from .models import Pasaje
+from .pdf import pdf_boleto
+from .qr import MONTO_MAXIMO, PATRON_REFERENCIA, contenido_boleto_qr, data_uri_svg, svg_pago_qr, svg_qr
 from .services import (
     DatosFacturacion,
     DatosPago,
@@ -184,10 +186,23 @@ class VerBoletoView(RolRequeridoMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["empresa"] = EMPRESA_FISCAL
         context["pagos"] = list(self.object.pagos.all())
+        # Incrustado como data URI: el boleto se imprime sin pedir otra imagen al servidor.
+        context["qr_boleto"] = data_uri_svg(svg_qr(contenido_boleto_qr(self.object), tamano=128))
         context["url_volver"] = reverse(
             "ventas:mis_pasajes" if self.request.user.rol == "cliente" else "ventas:nueva_venta"
         )
         return context
+
+
+class BoletoPdfView(VerBoletoView):
+    """Descarga el boleto en PDF. Hereda permisos y queryset de VerBoletoView: un cliente
+    solo descarga sus propios pasajes (los ajenos dan 404)."""
+
+    def get(self, request, *args, **kwargs):
+        pasaje = self.get_object()
+        respuesta = HttpResponse(pdf_boleto(pasaje, EMPRESA_FISCAL), content_type="application/pdf")
+        respuesta["Content-Disposition"] = f'attachment; filename="boleto-{pasaje.codigo_pasaje}.pdf"'
+        return respuesta
 
 
 class ReservasPendientesView(RolRequeridoMixin, ListView):
@@ -274,6 +289,29 @@ class BuscarPasajeroView(RolRequeridoMixin, View):
                 "tiene_cuenta": encontrado.tiene_cuenta,
             }
         )
+
+
+class QrPagoView(RolRequeridoMixin, View):
+    """GET ?monto=40.00&ref=QR-AB12CD34 -> imagen SVG del QR de pago (ficticio).
+
+    La pide static/js/pago_qr.js al elegir QR. Solo dibuja: no guarda nada ni cobra. Se
+    validan monto y referencia para no dibujar cualquier texto que llegue en la URL."""
+
+    # Quienes ven un formulario de pago: personal de ventanilla y el cliente al reservar.
+    roles_permitidos = ["ventanillero", "supervisor", "admin", "cliente"]
+
+    def get(self, request):
+        referencia = request.GET.get("ref", "")
+        try:
+            monto = Decimal(request.GET.get("monto", ""))
+        except InvalidOperation:
+            return HttpResponseBadRequest("Monto no valido.")
+        if not (Decimal("0.01") <= monto <= MONTO_MAXIMO) or not PATRON_REFERENCIA.match(referencia):
+            return HttpResponseBadRequest("Monto o referencia no validos.")
+        respuesta = HttpResponse(svg_pago_qr(monto.quantize(Decimal("0.01")), referencia), content_type="image/svg+xml")
+        # Mismo monto y referencia dan el mismo QR: el navegador puede reutilizarlo.
+        respuesta["Cache-Control"] = "private, max-age=3600"
+        return respuesta
 
 
 def _filtrar_por_codigo_o_ci(pasajes, consulta: str):

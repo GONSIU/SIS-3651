@@ -1,4 +1,4 @@
-{% load static %}
+{% load static core_notificaciones %}
 {# Barra superior de las paginas publicas (landing, salidas, nosotros, busqueda, login, registro y area del cliente). #}
 {# Cada boton lleva a su propia vista; la pildora de la pagina actual queda resaltada. #}
 {# Sin boton de compra: se compra desde cada tarjeta de Salidas o desde el hero de la landing. #}
@@ -15,6 +15,11 @@
 <span class="material-symbols-outlined text-[20px]">account_circle</span>
 <span class="max-w-[10rem] truncate">{{ user.get_full_name|default:user.username }}</span>
 </a>
+{% if user.rol == "cliente" %}
+{% notificaciones_sin_leer user as sin_leer %}
+<a class="relative flex items-center hover:text-signal-orange" href="{% url 'core:notificaciones' %}" title="Notificaciones" aria-label="Notificaciones{% if sin_leer %} ({{ sin_leer }} sin leer){% endif %}"><span class="material-symbols-outlined text-[20px]">notifications</span>{% if sin_leer %}<span class="absolute -top-1.5 -right-2 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-signal-orange text-white text-[0.65rem] leading-[1.1rem] text-center">{{ sin_leer }}</span>{% endif %}</a>
+<a class="flex items-center hover:text-signal-orange" href="{% url 'incidencias:mis_reclamos' %}" title="Reclamos y comentarios" aria-label="Reclamos y comentarios"><span class="material-symbols-outlined text-[20px]">support_agent</span></a>
+{% endif %}
 <a class="flex items-center hover:text-signal-orange" href="{% url 'usuarios:cambiar_password' %}" title="Cambiar contrasena" aria-label="Cambiar contrasena"><span class="material-symbols-outlined text-[20px]">key</span></a>
 <form method="post" action="{% url 'usuarios:logout' %}">{% csrf_token %}<button class="rounded-full border border-white/30 px-3 py-1.5 hover:border-signal-orange hover:text-signal-orange" type="submit">Salir</button></form>
 {% else %}

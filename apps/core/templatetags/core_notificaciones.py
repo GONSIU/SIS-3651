@@ -6,6 +6,7 @@ muestra la campana."""
 
 from django import template
 
+from apps.core.models import Notificacion
 from apps.core.notificaciones import ROLES_VENTANILLA, notificaciones_para
 
 register = template.Library()
@@ -18,6 +19,14 @@ def campana_notificaciones(context):
         "notificaciones": notificaciones,
         "total": sum(n.cantidad for n in notificaciones),
     }
+
+
+@register.simple_tag
+def notificaciones_sin_leer(usuario) -> int:
+    """Avisos sin leer de la bandeja del cliente (un COUNT, solo para el rol cliente)."""
+    if getattr(usuario, "rol", None) != "cliente":
+        return 0
+    return Notificacion.objects.filter(usuario=usuario, leida=False).count()
 
 
 @register.simple_tag

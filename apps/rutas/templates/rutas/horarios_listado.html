@@ -22,13 +22,14 @@
 <table class="w-full text-left">
 <thead>
 <tr class="bg-deep-navy text-white font-label text-label-sm uppercase">
-<th class="px-5 py-3">Hora de salida</th><th class="px-5 py-3">Dias</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
+<th class="px-5 py-3">Hora de salida</th><th class="px-5 py-3">Carril</th><th class="px-5 py-3">Dias</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3"></th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-highest font-body-sm text-body-sm">
 {% for horario in horarios %}
 <tr>
 <td class="px-5 py-3 font-label text-label-md text-deep-navy">{{ horario.hora_salida|time:"H:i" }}</td>
+<td class="px-5 py-3 font-label">{{ horario.carril|default:"&mdash;" }}</td>
 <td class="px-5 py-3 font-label">{{ horario.dias_semana }}</td>
 <td class="px-5 py-3">
 {% if horario.activo %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">ACTIVO</span>
@@ -46,7 +47,7 @@
 </td>
 </tr>
 {% empty %}
-<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="4">Esta ruta todavia no tiene horarios.</td></tr>
+<tr><td class="px-5 py-6 text-center font-body-sm text-body-sm text-on-surface-variant" colspan="5">Esta ruta todavia no tiene horarios.</td></tr>
 {% endfor %}
 </tbody>
 </table>

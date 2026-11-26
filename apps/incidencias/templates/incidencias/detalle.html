@@ -1,0 +1,65 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}{{ incidencia.codigo }} — Trans Naser{% endblock %}
+{% block nav_incidencias %}active{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<p class="font-label text-label-sm text-on-surface-variant mono">{{ incidencia.codigo }} · {{ incidencia.get_categoria_display }}</p>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">{{ incidencia.titulo }}</h1>
+</div>
+<a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:text-signal-orange self-start" href="{% url 'incidencias:listado' %}"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Volver al historial</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<section class="card-panel rounded-lg p-6 lg:col-span-2 space-y-5">
+<div class="flex flex-wrap gap-3 font-body-sm text-body-sm items-center">
+{% include "incidencias/_estado.html" %}
+<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">schedule</span>{{ incidencia.ocurrido_en|date:"d/m/Y H:i" }}</span>
+{% if incidencia.bus %}<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">directions_bus</span>Bus {{ incidencia.bus.placa }}</span>{% endif %}
+{% if incidencia.calificacion %}<span class="inline-flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full"><span class="material-symbols-outlined text-[16px]">star</span>Calificación {{ incidencia.calificacion }} de 5</span>{% endif %}
+</div>
+<div>
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Descripción</p>
+<p class="font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ incidencia.descripcion }}</p>
+</div>
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-body-sm text-body-sm">
+<div><dt class="font-label text-label-sm text-on-surface-variant uppercase">Reportado por</dt><dd>{{ incidencia.reportado_por.get_full_name|default:incidencia.reportado_por.username }}{% if incidencia.es_de_cliente %} (cliente){% endif %}</dd></div>
+<div><dt class="font-label text-label-sm text-on-surface-variant uppercase">Registrado</dt><dd>{{ incidencia.created_at|date:"d/m/Y H:i" }}</dd></div>
+{% if incidencia.viaje %}<div><dt class="font-label text-label-sm text-on-surface-variant uppercase">Viaje</dt><dd>{{ incidencia.viaje.ruta.origen.ciudad }} → {{ incidencia.viaje.ruta.destino.ciudad }}, {{ incidencia.viaje.fecha_salida|date:"d/m/Y" }} {{ incidencia.viaje.horario.hora_salida|time:"H:i" }}</dd></div>{% endif %}
+{% if incidencia.pasaje %}<div><dt class="font-label text-label-sm text-on-surface-variant uppercase">Pasaje</dt><dd class="mono">{{ incidencia.pasaje.codigo_pasaje }}</dd></div>{% endif %}
+{% if incidencia.empleado_involucrado %}<div><dt class="font-label text-label-sm text-on-surface-variant uppercase">Personal involucrado</dt><dd>{{ incidencia.empleado_involucrado.usuario.get_full_name|default:incidencia.empleado_involucrado.usuario.username }}</dd></div>{% endif %}
+</dl>
+{% if incidencia.estado == "resuelta" %}
+<div class="border-t border-surface-container-highest pt-4">
+<p class="font-label text-label-md text-deep-navy uppercase mb-1">Resolución</p>
+<p class="font-body-sm text-body-sm whitespace-pre-line">{{ incidencia.resolucion }}</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Resuelta por {{ incidencia.resuelta_por.get_full_name|default:incidencia.resuelta_por.username|default:"—" }} el {{ incidencia.resuelta_en|date:"d/m/Y H:i" }}.</p>
+</div>
+{% endif %}
+</section>
+
+<aside class="card-panel rounded-lg p-6 space-y-4 self-start">
+<h2 class="font-headline text-headline-md text-deep-navy">Seguimiento</h2>
+{% if incidencia.estados_siguientes %}
+{% if incidencia.estado == "abierta" %}
+<form method="post" action="{% url 'incidencias:cambiar_estado' incidencia.pk %}">
+{% csrf_token %}
+<input type="hidden" name="estado" value="en_revision"/>
+<button class="w-full px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high" type="submit">Pasar a revisión</button>
+</form>
+{% endif %}
+<form method="post" action="{% url 'incidencias:cambiar_estado' incidencia.pk %}" class="space-y-2">
+{% csrf_token %}
+<input type="hidden" name="estado" value="resuelta"/>
+<label class="font-label text-label-sm text-on-surface-variant block" for="resolucion">Resolución</label>
+<textarea class="form-input-custom w-full border border-outline-variant rounded px-4 py-2.5 font-body-sm text-body-sm resize-none" id="resolucion" name="resolucion" rows="5" required maxlength="2000" placeholder="Que se hizo para resolverla{% if incidencia.es_de_cliente %} (el cliente recibe este texto){% endif %}."></textarea>
+<button class="w-full px-5 py-2.5 rounded bg-signal-orange text-white font-label text-label-md hover:bg-secondary flex items-center justify-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">task_alt</span>Marcar como resuelta</button>
+</form>
+{% else %}
+<p class="font-body-sm text-body-sm text-on-surface-variant">La incidencia está resuelta: no admite más cambios.</p>
+{% endif %}
+</aside>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from apps.incidencias.models import Incidencia
 from apps.rutas.models import Terminal
 from apps.usuarios.models import Usuario
 
@@ -32,11 +33,32 @@ class ComprobarPermisosMixin:
 
 
 class IncidenciasPermisosTests(ComprobarPermisosMixin, TestCase):
-    """Maqueta: se protege igual desde ya (decision de la Fase 2)."""
-
     @classmethod
     def setUpTestData(cls):
         cls.usuarios = crear_usuarios_por_rol(Terminal.objects.create(nombre="Bimodal", ciudad="La Paz"))
+        cls.incidencia = Incidencia.objects.create(
+            categoria="otro", titulo="X", descripcion="Y", reportado_por=cls.usuarios["admin"]
+        )
 
-    def test_permisos(self):
-        self.comprobar_get([reverse("incidencias:listado"), reverse("incidencias:nueva")], {"supervisor", "admin"})
+    def test_pantallas_del_personal(self):
+        self.comprobar_get(
+            [
+                reverse("incidencias:listado"),
+                reverse("incidencias:nueva"),
+                reverse("incidencias:detalle", args=[self.incidencia.pk]),
+            ],
+            {"supervisor", "admin"},
+        )
+
+    def test_pantallas_del_cliente(self):
+        self.comprobar_get(
+            [reverse("incidencias:mis_reclamos"), reverse("incidencias:nuevo_reclamo")], {"cliente"}
+        )
+
+    def test_cambiar_estado_solo_gestion(self):
+        url = reverse("incidencias:cambiar_estado", args=[self.incidencia.pk])
+        for rol, usuario in self.usuarios.items():
+            with self.subTest(rol=rol):
+                self.client.force_login(usuario)
+                esperado = 302 if rol in {"supervisor", "admin"} else 403
+                self.assertEqual(self.client.post(url, {"estado": "en_revision"}).status_code, esperado)

@@ -1,0 +1,34 @@
+{% extends "base_publico.html" %}
+
+{% block title %}Mis reclamos — Trans Naser{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reclamos y comentarios</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Consulta el estado de lo que enviaste y la respuesta de Trans Naser.</p>
+</div>
+<a class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-5 py-2.5 rounded flex items-center gap-2 self-start" href="{% url 'incidencias:nuevo_reclamo' %}"><span class="material-symbols-outlined text-[18px]">add_comment</span>Nuevo reclamo</a>
+</div>
+
+<div class="space-y-4">
+{% for incidencia in reclamos %}
+<article class="card-panel rounded-lg p-5 space-y-2">
+<div class="flex flex-wrap items-center justify-between gap-3">
+<p class="font-label text-label-md text-deep-navy">{{ incidencia.titulo }}</p>
+{% include "incidencias/_estado.html" %}
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant"><span class="mono">{{ incidencia.codigo }}</span> · {{ incidencia.get_categoria_display }} · enviado el {{ incidencia.created_at|date:"d/m/Y H:i" }}{% if incidencia.pasaje %} · pasaje <span class="mono">{{ incidencia.pasaje.codigo_pasaje }}</span>{% endif %}{% if incidencia.calificacion %} · calificación {{ incidencia.calificacion }}/5{% endif %}</p>
+<p class="font-body-sm text-body-sm whitespace-pre-line">{{ incidencia.descripcion }}</p>
+{% if incidencia.estado == "resuelta" %}
+<div class="bg-surface-container-low rounded px-4 py-3">
+<p class="font-label text-label-sm text-deep-navy uppercase">Respuesta</p>
+<p class="font-body-sm text-body-sm whitespace-pre-line">{{ incidencia.resolucion }}</p>
+</div>
+{% endif %}
+</article>
+{% empty %}
+<div class="card-panel rounded-lg p-6 text-center text-on-surface-variant">No enviaste reclamos ni comentarios. <a class="text-deep-navy underline" href="{% url 'incidencias:nuevo_reclamo' %}">Enviar uno</a>.</div>
+{% endfor %}
+</div>
+{% endblock %}

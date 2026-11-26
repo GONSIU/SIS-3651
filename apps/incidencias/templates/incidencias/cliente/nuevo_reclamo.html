@@ -1,0 +1,27 @@
+{% extends "base_publico.html" %}
+
+{% block title %}Nuevo reclamo — Trans Naser{% endblock %}
+
+{% block content %}
+<div>
+<h1 class="font-headline text-headline-lg-mobile md:text-headline-lg text-deep-navy">Reclamos y comentarios</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Cuéntanos tu queja o sugerencia. Recibirás un ticket para seguir su estado.</p>
+</div>
+{% if form.non_field_errors %}
+<div class="bg-error-container text-on-error-container text-body-sm rounded px-4 py-3">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+{% endif %}
+<form class="card-panel rounded-lg p-6 space-y-6" method="post" novalidate>
+{% csrf_token %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+{% include "ventas/cliente/_campo.html" with campo=form.categoria %}
+{% include "ventas/cliente/_campo.html" with campo=form.pasaje %}
+{% include "ventas/cliente/_campo.html" with campo=form.titulo clase="md:col-span-2" %}
+</div>
+{% include "ventas/cliente/_campo.html" with campo=form.descripcion %}
+<div class="md:w-1/2">{% include "ventas/cliente/_campo.html" with campo=form.calificacion %}</div>
+<div class="flex justify-end gap-3 pt-6 border-t border-surface-container-highest">
+<a class="px-5 py-2.5 rounded border border-deep-navy text-deep-navy font-label text-label-md hover:bg-surface-container-high" href="{% url 'incidencias:mis_reclamos' %}">Cancelar</a>
+<button class="px-6 py-2.5 rounded bg-signal-orange text-white font-label text-label-md hover:bg-secondary shadow-sm flex items-center gap-2" type="submit"><span class="material-symbols-outlined text-[18px]">send</span>Enviar</button>
+</div>
+</form>
+{% endblock %}

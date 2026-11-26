@@ -1,0 +1,4 @@
+{# Pildora del estado de una incidencia. Espera la variable "incidencia". #}
+{% if incidencia.estado == "abierta" %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-red-100 text-red-800">ABIERTA</span>
+{% elif incidencia.estado == "en_revision" %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">EN REVISIÓN</span>
+{% else %}<span class="font-label text-label-sm px-2.5 py-1 rounded-full bg-green-100 text-green-800">RESUELTA</span>{% endif %}

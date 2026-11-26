@@ -22,7 +22,7 @@ def viajes_para_encomienda():
 class EncomiendaForm(forms.ModelForm):
 
     metodo_pago = forms.ChoiceField(
-        choices=Pago.METODO_CHOICES,
+        choices=Pago.METODOS_VIGENTES_CHOICES,
         widget=forms.Select(attrs={"class": SELECT_CLASSES}),
     )
     referencia_externa = forms.CharField(

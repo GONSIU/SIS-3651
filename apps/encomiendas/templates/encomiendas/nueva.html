@@ -103,6 +103,7 @@
 {{ form.referencia_externa }}
 {% if form.referencia_externa.errors %}<p class="text-body-sm text-error mt-1">{{ form.referencia_externa.errors.0 }}</p>{% endif %}
 </div>
+<div class="mt-3">{% include "ventas/_pago_qr.html" with metodo=form.metodo_pago referencia=form.referencia_externa monto_texto="tarifa-total" %}</div>
 
 <button type="submit" class="mt-5 w-full bg-signal-orange hover:bg-secondary text-white font-label text-label-md py-3 rounded flex items-center justify-center gap-2 shadow-sm transition-colors"><span class="material-symbols-outlined text-[18px]">print</span>Registrar y generar guía</button>
 </div>

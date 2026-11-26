@@ -42,7 +42,7 @@ class NuevaEncomiendaViewTests(EncomiendasTestCase):
         self.assertTrue(encomienda.comprobante.numero_comprobante.startswith("CME-"))
 
     def test_metodo_no_efectivo_exige_referencia(self):
-        respuesta = self.registrar(metodo_pago="tarjeta")
+        respuesta = self.registrar(metodo_pago="qr")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "necesita una referencia")
         self.assertFalse(Encomienda.objects.exists())

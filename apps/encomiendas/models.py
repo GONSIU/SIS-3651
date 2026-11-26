@@ -16,7 +16,7 @@ from apps.core.validators import (
     validar_nombre_persona,
     validar_telefono,
 )
-from apps.ventas.models import Pago
+from apps.ventas.models import Pago, errores_metodo_vigente
 from apps.viajes.models import Viaje
 
 CENTAVO = Decimal("0.01")
@@ -230,6 +230,7 @@ class PagoEncomienda(models.Model):
 
         if self.metodo and self.metodo != "efectivo" and not self.referencia_externa:
             errores["referencia_externa"] = "Este metodo de pago necesita una referencia."
+        errores.update(errores_metodo_vigente(self))
 
         precio = self.encomienda.precio_envio if self.encomienda_id else None
         if precio is not None and self.monto is not None:

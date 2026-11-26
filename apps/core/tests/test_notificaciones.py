@@ -4,8 +4,9 @@ from decimal import Decimal
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.notificaciones import notificaciones_para
+from apps.core.notificaciones import PORCENTAJE_CASI_LLENO, notificaciones_para
 from apps.encomiendas.models import Encomienda
+from apps.incidencias.models import Incidencia
 from apps.personal.models import Empleado
 from apps.rutas.models import Horario
 from apps.usuarios.models import Usuario
@@ -92,8 +93,34 @@ class AlertasDeGestionTests(NotificacionesTestCase):
 
     def test_numero_de_consultas(self):
         # Una consulta COUNT por alerta: no crece con la cantidad de datos.
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             notificaciones_para(self.supervisor, ahora=self.ahora)
+
+    def llenar(self, viaje, cantidad: int, estado: str = "vendido") -> None:
+        ids = list(viaje.asientos_viaje.order_by("pk").values_list("pk", flat=True)[:cantidad])
+        viaje.asientos_viaje.filter(pk__in=ids).update(estado=estado)
+
+    def test_viajes_casi_llenos(self):
+        # El bus de prueba tiene 4 asientos: 4 de 4 ocupados (100 %) cuenta, 3 de 4 (75 %) no.
+        self.assertTrue(75 < PORCENTAJE_CASI_LLENO <= 100)
+        lleno = self.crear_viaje(fecha_salida=self.hoy)
+        self.llenar(lleno, 3)  # vendidos
+        lleno.asientos_viaje.filter(estado="disponible").update(estado="reservado")  # el cuarto, reservado
+        self.llenar(self.viaje, 3)  # manana, 75 %
+        cancelado = self.crear_viaje(fecha_salida=self.hoy, horario=self.horario_tarde, estado="cancelado")
+        self.llenar(cancelado, 4)
+        pasado_manana = self.crear_viaje(fecha_salida=self.hoy + timedelta(days=2))
+        self.llenar(pasado_manana, 4)
+        self.assertEqual(self.cantidades(self.supervisor)[reverse("reportes:ocupacion")], 1)
+
+    def test_incidencias_sin_resolver(self):
+        for estado in ("abierta", "en_revision", "resuelta"):
+            Incidencia.objects.create(
+                categoria="otro", titulo=estado, descripcion="x", estado=estado,
+                resolucion="Listo" if estado == "resuelta" else "", reportado_por=self.supervisor,
+            )
+        self.assertEqual(self.cantidades(self.supervisor)[reverse("incidencias:listado")], 2)
+        self.assertNotIn(reverse("incidencias:listado"), self.cantidades(self.vendedor))
 
 
 class AlertasPorRolTests(NotificacionesTestCase):

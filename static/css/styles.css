@@ -52,6 +52,11 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .nav-link:hover .material-symbols-outlined { color: #ffffff; }
 .nav-link.active { background: rgba(244, 121, 32, 0.12); color: #ffffff; border-left: 3px solid #f47920; }
 .nav-link.active .material-symbols-outlined { color: #f47920; }
+/* Submenu desplegable del sidebar (<details>): sin el triangulo nativo; la flecha gira al abrir. */
+.nav-grupo > summary { list-style: none; }
+.nav-grupo > summary::-webkit-details-marker { display: none; }
+.nav-grupo-flecha { transition: transform 0.2s; }
+.nav-grupo[open] .nav-grupo-flecha { transform: rotate(180deg); }
 
 /* Mapa de asientos (Venta de Boletos) */
 .seat-btn { transition: background-color .12s ease, color .12s ease, border-color .12s ease; }

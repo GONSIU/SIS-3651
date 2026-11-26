@@ -27,15 +27,24 @@
 <a class="nav-link {% block nav_dashboard %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'core:index' %}">
 <span class="material-symbols-outlined text-[20px]">dashboard</span>Dashboard
 </a>
-<a class="nav-link {% block nav_ventas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:nueva_venta' %}">
+{# Submenu desplegable con <details>: abre y cierra sin JavaScript. Llega abierto en cualquier pantalla de ventas. #}
+<details class="nav-grupo" data-menu-ventas{% if request.resolver_match.app_name == "ventas" %} open{% endif %}>
+<summary class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors cursor-pointer">
 <span class="material-symbols-outlined text-[20px]">confirmation_number</span>Venta de Boletos
+<span class="nav-grupo-flecha material-symbols-outlined text-[20px] ml-auto">expand_more</span>
+</summary>
+<div class="mt-1 ml-4 pl-2 border-l border-white/10 space-y-1">
+<a class="nav-link {% block nav_ventas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:nueva_venta' %}">
+<span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>Nueva venta
 </a>
-<a class="nav-link {% block nav_reservas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:reservas_pendientes' %}">
-<span class="material-symbols-outlined text-[20px]">pending_actions</span>Reservas Pendientes
+<a class="nav-link {% block nav_reservas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:reservas_pendientes' %}">
+<span class="material-symbols-outlined text-[18px]">pending_actions</span>Reservas pendientes
 </a>
-<a class="nav-link {% block nav_reprogramaciones %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:reprogramaciones' %}">
-<span class="material-symbols-outlined text-[20px]">event_repeat</span>Reprogramaciones
+<a class="nav-link {% block nav_reprogramaciones %}{% endblock %} w-full flex items-center gap-3 px-3 py-2 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'ventas:reprogramaciones' %}">
+<span class="material-symbols-outlined text-[18px]">event_repeat</span>Reprogramaciones
 </a>
+</div>
+</details>
 <a class="nav-link {% block nav_encomiendas %}{% endblock %} w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-label text-label-md text-left transition-colors" href="{% url 'encomiendas:listado' %}">
 <span class="material-symbols-outlined text-[20px]">package_2</span>Encomiendas
 </a>

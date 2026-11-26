@@ -36,6 +36,12 @@
 {{ form.dias_semana }}
 {% if form.dias_semana.errors %}<p class="text-body-sm text-error mt-1">{{ form.dias_semana.errors.0 }}</p>{% endif %}
 </div>
+<div>
+<label class="font-label text-label-sm text-on-surface-variant block mb-1.5" for="{{ form.carril.id_for_label }}">Carril de salida</label>
+{{ form.carril }}
+<p class="text-body-sm text-on-surface-variant mt-1">{{ form.carril.help_text }} Se imprime en el boleto.</p>
+{% if form.carril.errors %}<p class="text-body-sm text-error mt-1">{{ form.carril.errors.0 }}</p>{% endif %}
+</div>
 </div>
 
 <div class="flex items-center gap-3 pt-5">

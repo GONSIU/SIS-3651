@@ -110,6 +110,21 @@ class HorarioTests(TestCase):
         self.assertTrue(horario.opera_el(sabado))
         self.assertFalse(horario.opera_el(domingo))
 
+    def test_carril_opcional_y_en_rango(self):
+        Horario(ruta=self.ruta, hora_salida=time(8), dias_semana="L").full_clean()
+        for carril, valido in ((1, True), (99, True), (0, False), (100, False)):
+            with self.subTest(carril=carril):
+                horario = Horario(ruta=self.ruta, hora_salida=time(8), dias_semana="L", carril=carril)
+                if valido:
+                    horario.full_clean()
+                else:
+                    with self.assertRaises(ValidationError):
+                        horario.full_clean()
+
+    def test_constraint_del_carril(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Horario.objects.create(ruta=self.ruta, hora_salida=time(9), dias_semana="L", carril=150)
+
     def test_dias_legibles(self):
         casos = {"L": "lunes", "V,L": "lunes y viernes", "L,X,V": "lunes, miercoles y viernes",
                  "L,M,X,J,V,S,D": "todos los dias"}

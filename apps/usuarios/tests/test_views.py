@@ -113,6 +113,11 @@ class NuevoUsuarioTests(GestionUsuariosTestCase):
         self.assertIn("username", errores)
         self.assertIn("ci", errores)
 
+    def test_rechaza_correo_duplicado(self):
+        Usuario.objects.create(username="otro", email="JUAN@example.com")
+        respuesta = self.crear()
+        self.assertIn("email", respuesta.context["form"].errors)
+
 
 class EditarUsuarioTests(GestionUsuariosTestCase):
     def editar(self, usuario, **kwargs):

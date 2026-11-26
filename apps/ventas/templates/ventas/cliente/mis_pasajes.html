@@ -30,6 +30,7 @@
 {% if pasaje.estado == "pagado" or pasaje.estado == "reservado" or pasaje.estado == "usado" %}
 <a class="inline-flex items-center gap-1 font-label text-label-md text-deep-navy hover:text-signal-orange" href="{% url 'ventas:boleto' pasaje.pk %}"><span class="material-symbols-outlined text-[18px]">receipt_long</span>{% if pasaje.estado == "reservado" %}Comprobante{% else %}Boleto{% endif %}</a>
 {% endif %}
+<a class="inline-flex items-center gap-1 font-label text-label-md text-on-surface-variant hover:text-signal-orange" href="{% url 'incidencias:nuevo_reclamo' %}?pasaje={{ pasaje.pk }}"><span class="material-symbols-outlined text-[18px]">support_agent</span>Reclamar</a>
 {% if pasaje.estado == "reservado" %}
 <form method="post" action="{% url 'ventas:cancelar_reserva' pasaje.pk %}" onsubmit="return confirm('Cancelar la reserva? El anticipo pagado no se devuelve.');">
 {% csrf_token %}

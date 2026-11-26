@@ -10,6 +10,20 @@ SELECT_CLASSES = INPUT_CLASSES + " bg-white"
 CHECKBOX_CLASSES = "h-4 w-4 accent-signal-orange"
 
 
+def validar_correo_libre(email: str, excluir_pk: int | None = None) -> str:
+    """Normaliza el correo y rechaza uno ya usado por otra cuenta (sin distinguir
+    mayusculas). Vacio se permite: el correo es opcional."""
+    email = (email or "").strip()
+    if not email:
+        return email
+    otros = Usuario.objects.filter(email__iexact=email)
+    if excluir_pk is not None:
+        otros = otros.exclude(pk=excluir_pk)
+    if otros.exists():
+        raise ValidationError("Ya existe una cuenta con este correo electronico.")
+    return email
+
+
 class RegistroClienteForm(UserCreationForm):
     """Registro publico de clientes.
 
@@ -37,6 +51,9 @@ class RegistroClienteForm(UserCreationForm):
             self.fields[campo].required = True
         for campo in self.fields.values():
             campo.widget.attrs.setdefault("class", INPUT_CLASSES)
+
+    def clean_email(self) -> str:
+        return validar_correo_libre(self.cleaned_data.get("email", ""))
 
 
 class UsuarioForm(forms.ModelForm):
@@ -86,6 +103,9 @@ class UsuarioForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["rol"].choices = self.ROLES_ALTA
         self.fields["rol"].initial = "ventanillero"
+
+    def clean_email(self) -> str:
+        return validar_correo_libre(self.cleaned_data.get("email", ""), excluir_pk=self.instance.pk)
 
     def _post_clean(self):
         # Igual que UserCreationForm: se valida despues de construir la instancia para

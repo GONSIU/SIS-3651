@@ -28,6 +28,17 @@ class RegistroObligatoriosTests(TestCase):
         Usuario.objects.create_user("otro", ci="1234567")
         self.assertIn("ci", RegistroClienteForm(data=datos()).errors)
 
+    def test_correo_repetido_se_rechaza_sin_importar_mayusculas(self):
+        Usuario.objects.create_user("otro", email="Ana@Example.com")
+        self.assertIn("email", RegistroClienteForm(data=datos()).errors)
+
+    def test_correo_vacio_se_permite_aunque_otras_cuentas_no_tengan(self):
+        Usuario.objects.create_user("otro", email="")
+        self.assertNotIn("email", RegistroClienteForm(data=datos(email="")).errors)
+
+    def test_formulario_tiene_cancelar(self):
+        self.assertContains(self.client.get(URL), f'href="{reverse("core:root")}">Cancelar</a>')
+
 
 class RegistroViewTests(TestCase):
     def test_crea_la_cuenta_inicia_sesion_y_va_a_mis_pasajes(self):

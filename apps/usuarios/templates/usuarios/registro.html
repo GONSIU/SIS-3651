@@ -26,6 +26,7 @@
 <div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
 <button class="bg-signal-orange hover:bg-secondary text-white font-label text-label-md px-6 py-2.5 rounded" type="submit">Crear cuenta</button>
 <a class="font-label text-label-md text-on-surface-variant hover:text-deep-navy" href="{% url 'usuarios:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Ya tengo cuenta</a>
+<a class="ml-auto font-label text-label-md text-on-surface-variant hover:text-deep-navy" href="{% url 'core:root' %}">Cancelar</a>
 </div>
 </form>
 </div>

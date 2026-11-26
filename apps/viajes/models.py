@@ -4,7 +4,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
+from django.urls import reverse
 from django.utils import timezone
+from apps.core.models import Notificacion
 from apps.rutas.models import Ruta, Horario
 from apps.flota.models import Bus, Asiento
 
@@ -225,6 +227,10 @@ class Viaje(models.Model):
             raise ValidationError(f"El retraso debe estar entre 1 y {self.MAX_MINUTOS_RETRASO} minutos.")
         self.minutos_retraso = minutos
         self._guardar_estado("retrasado", usuario, "minutos_retraso")
+        self._avisar_pasajeros(
+            "Tu viaje tiene retraso",
+            f"El viaje {self._descripcion_aviso()} saldra con un retraso estimado de {minutos} minutos.",
+        )
 
     def registrar_salida(self, usuario, momento: datetime | None = None) -> None:
         """Marca la salida real. El retraso pasa a ser el real (0 si salio a tiempo o
@@ -281,11 +287,30 @@ class Viaje(models.Model):
 
     def cancelar(self, usuario) -> None:
         """Cancela un viaje que aun no salio. Los pasajes vendidos no se tocan (no hay
-        reembolsos); el aviso a los pasajeros llega con las notificaciones."""
+        reembolsos); los pasajeros con cuenta reciben una notificacion."""
         self._validar_transicion("cancelado")
         # La constraint viaje_retraso_segun_estado no admite retraso en un cancelado.
         self.minutos_retraso = 0
         self._guardar_estado("cancelado", usuario, "minutos_retraso")
+        self._avisar_pasajeros(
+            "Tu viaje fue cancelado",
+            f"El viaje {self._descripcion_aviso()} fue cancelado. Acercate a ventanilla para coordinar otro viaje.",
+        )
+
+    def _descripcion_aviso(self) -> str:
+        return (
+            f"{self.ruta.origen.ciudad} - {self.ruta.destino.ciudad} del "
+            f"{self.fecha_salida:%d/%m/%Y} a las {self.horario.hora_salida:%H:%M}"
+        )
+
+    def _avisar_pasajeros(self, titulo: str, mensaje: str) -> int:
+        """Crea una notificacion para cada cliente con cuenta que tiene un pasaje vigente
+        (reservado o pagado) en este viaje. Las ventas de ventanilla sin cuenta no reciben
+        aviso. Usa el manager relacionado para no importar apps.ventas."""
+        clientes = self.pasajes.filter(
+            estado__in=("reservado", "pagado"), cliente__isnull=False
+        ).values_list("cliente_id", flat=True)
+        return Notificacion.avisar(clientes, titulo, mensaje, reverse("ventas:mis_pasajes"))
 
     @property
     def asientos_totales(self):
